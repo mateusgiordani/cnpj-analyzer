@@ -60,7 +60,7 @@ analyze: ## Analisa um projeto específico (use PROJECT=./caminho/do/projeto)
 		exit 1; \
 	fi
 	@echo "$(BLUE)Analisando projeto: $(PROJECT)$(NC)"
-	$(PYTHON) $(ANALYZER_SCRIPT) analyze --project-path $(PROJECT) --output reports/
+	$(PYTHON) $(ANALYZER_SCRIPT) analyze $(PROJECT) --output reports/
 
 analyze-all: ## Analisa todos os projetos configurados
 	@echo "$(BLUE)Analisando todos os projetos configurados...$(NC)"
@@ -94,7 +94,7 @@ quick-scan: ## Escaneamento rápido de um projeto
 		exit 1; \
 	fi
 	@echo "$(BLUE)Escaneamento rápido: $(PROJECT)$(NC)"
-	$(PYTHON) $(ANALYZER_SCRIPT) quick-scan --project-path $(PROJECT)
+	$(PYTHON) $(ANALYZER_SCRIPT) quick-scan $(PROJECT)
 
 validate-cnpj: ## Valida estrutura de CNPJ em um projeto
 	@if [ -z "$(PROJECT)" ]; then \
@@ -102,7 +102,7 @@ validate-cnpj: ## Valida estrutura de CNPJ em um projeto
 		exit 1; \
 	fi
 	@echo "$(BLUE)Validando CNPJ em: $(PROJECT)$(NC)"
-	$(PYTHON) $(ANALYZER_SCRIPT) validate-cnpj --project-path $(PROJECT)
+	$(PYTHON) $(ANALYZER_SCRIPT) validate-cnpj $(PROJECT)
 
 find-migrations: ## Encontra migrações relacionadas a CNPJ
 	@if [ -z "$(PROJECT)" ]; then \
@@ -110,7 +110,7 @@ find-migrations: ## Encontra migrações relacionadas a CNPJ
 		exit 1; \
 	fi
 	@echo "$(BLUE)Buscando migrações em: $(PROJECT)$(NC)"
-	$(PYTHON) $(ANALYZER_SCRIPT) find-migrations --project-path $(PROJECT)
+	$(PYTHON) $(ANALYZER_SCRIPT) find-migrations $(PROJECT)
 
 find-validations: ## Encontra validações de CNPJ
 	@if [ -z "$(PROJECT)" ]; then \
@@ -118,7 +118,7 @@ find-validations: ## Encontra validações de CNPJ
 		exit 1; \
 	fi
 	@echo "$(BLUE)Buscando validações em: $(PROJECT)$(NC)"
-	$(PYTHON) $(ANALYZER_SCRIPT) find-validations --project-path $(PROJECT)
+	$(PYTHON) $(ANALYZER_SCRIPT) find-validations $(PROJECT)
 
 find-masks: ## Encontra máscaras de CNPJ no frontend
 	@if [ -z "$(PROJECT)" ]; then \
@@ -126,7 +126,7 @@ find-masks: ## Encontra máscaras de CNPJ no frontend
 		exit 1; \
 	fi
 	@echo "$(BLUE)Buscando máscaras em: $(PROJECT)$(NC)"
-	$(PYTHON) $(ANALYZER_SCRIPT) find-masks --project-path $(PROJECT)
+	$(PYTHON) $(ANALYZER_SCRIPT) find-masks $(PROJECT)
 
 test: ## Executa testes
 	@echo "$(BLUE)Executando testes...$(NC)"
