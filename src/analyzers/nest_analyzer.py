@@ -425,7 +425,7 @@ class NestAnalyzer(BaseAnalyzer):
             'cnpj_fields_found': all_fields,
             'validations_found': validations,
             'frontend_masks': [],  # NestJS não tem máscaras frontend
-            'overall_impact': overall_impact,
+            'overall_impact': overall_impact.value if overall_impact else 'baixo',
             'package_info': package_info,
             'files_scanned': len(scanned_files),
             'framework_detected': 'nestjs',
