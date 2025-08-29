@@ -293,7 +293,7 @@ class CNPJAnalyzerModular:
             # Preparar dados para serialização
             serializable_result = {}
             for key, value in result.items():
-                if key == 'cnpj_fields_found':
+                if key in ['cnpj_fields_found', 'validations_found', 'frontend_masks', 'input_masks', 'form_validations']:
                     # Converter campos CNPJ para formato serializável
                     serializable_fields = []
                     for field in value:
@@ -311,20 +311,41 @@ class CNPJAnalyzerModular:
                                 'estimated_effort': '4-8 horas'
                             })
                         else:
-                            serializable_fields.append({
-                                'file_path': getattr(field, 'file_path', 'Unknown'),
-                                'line_number': getattr(field, 'line_number', 0),
-                                'field_name': getattr(field, 'field_name', 'Unknown'),
-                                'field_type': getattr(field, 'field_type', 'Unknown'),
-                                'field_size': getattr(field, 'field_size', None),
-                                'impact_level': getattr(field, 'impact_level', 'MEDIUM').value if hasattr(field, 'impact_level') else 'MEDIUM',
-                                'status': getattr(field, 'status', 'NEEDS_ANALYSIS').value if hasattr(field, 'status') else 'NEEDS_ANALYSIS',
-                                'action_needed': getattr(field, 'action_needed', 'Análise manual necessária'),
-                                'estimated_effort': getattr(field, 'estimated_effort', '4-8 horas')
-                            })
+                            # Usar a interface CNPJFieldInterface para serialização
+                            if hasattr(field, 'to_dict'):
+                                serializable_fields.append(field.to_dict())
+                            else:
+                                # Fallback para objetos antigos
+                                impact_level = getattr(field, 'impact_level', None)
+                                if hasattr(impact_level, 'value'):
+                                    impact_level = impact_level.value
+                                else:
+                                    impact_level = 'MEDIUM'
+                                
+                                status = getattr(field, 'status', None)
+                                if hasattr(status, 'value'):
+                                    status = status.value
+                                else:
+                                    status = 'NEEDS_ANALYSIS'
+                                
+                                serializable_fields.append({
+                                    'file_path': getattr(field, 'file_path', 'Unknown'),
+                                    'line_number': getattr(field, 'line_number', 0),
+                                    'field_name': getattr(field, 'field_name', 'Unknown'),
+                                    'field_type': getattr(field, 'field_type', 'Unknown'),
+                                    'field_size': getattr(field, 'field_size', None),
+                                    'context': getattr(field, 'context', ''),
+                                    'project_type': getattr(field, 'project_type', 'unknown'),
+                                    'impact_level': impact_level,
+                                    'status': status,
+                                    'action_needed': getattr(field, 'action_needed', 'Análise manual necessária'),
+                                    'estimated_effort': getattr(field, 'estimated_effort', '4-8 horas')
+                                })
                     serializable_result[key] = serializable_fields
                 else:
                     serializable_result[key] = value
+            
+
             
             with open(json_file, 'w', encoding='utf-8') as f:
                 json.dump(serializable_result, f, indent=2, ensure_ascii=False)
@@ -388,6 +409,11 @@ Consulte o arquivo JSON para mais detalhes.
             # Categorizar campos por tipo de arquivo
             categorized_fields = self._categorize_fields(cnpj_fields)
             
+            # Contar validações e máscaras das subcategorias
+            code_fields = categorized_fields.get('code', {})
+            validation_count = len(code_fields.get('validations', []))
+            mask_count = len(code_fields.get('frontend_masks', []))
+            
             report_content = f"""# Relatório de Análise CNPJ Alfanumérico
 
 ## 📋 RESUMO EXECUTIVO
@@ -401,8 +427,8 @@ Consulte o arquivo JSON para mais detalhes.
 ### Impacto Geral
 - **Nível de Impacto**: {impact_str.upper()}
 - **Total de Campos CNPJ**: {len(cnpj_fields)}
-- **Validações Encontradas**: {len(validations)}
-- **Máscaras Frontend**: {len(masks)}
+- **Validações Encontradas**: {validation_count}
+- **Máscaras Frontend**: {mask_count}
 
 ### Distribuição por Impacto
 - **🟢 Baixo**: {impact_counts['baixo']} campos
@@ -412,10 +438,13 @@ Consulte o arquivo JSON para mais detalhes.
 
 ### Categorias de Arquivos
 - **📁 Migrações**: {len(categorized_fields.get('migrations', []))} campos
-- **💻 Código**: {len(categorized_fields.get('code', []))} campos
+- **💻 Código**: {self._count_code_fields(categorized_fields.get('code', {}))} campos
 - **🧪 Testes**: {len(categorized_fields.get('tests', []))} campos
 - **🗄️ ETL**: {len(categorized_fields.get('etl', []))} campos
 - **📄 Outros**: {len(categorized_fields.get('others', []))} campos
+
+### Subcategorias de Código
+{self._format_code_subcategories(categorized_fields.get('code', {}))}
 
 ## 🚨 CAMPOS CRÍTICOS (Requerem Ação Imediata)
 
@@ -457,53 +486,106 @@ Consulte o arquivo JSON para mais detalhes.
             
             # Adicionar campos por categoria
             for category, fields in categorized_fields.items():
-                if fields:
-                    category_name = {
-                        'migrations': '📁 MIGRAÇÕES',
-                        'code': '💻 CÓDIGO',
-                        'tests': '🧪 TESTES',
-                        'etl': '🗄️ ETL',
-                        'others': '📄 OUTROS'
-                    }.get(category, category.upper())
-                    
-                    report_content += f"\n## {category_name}\n\n"
-                    report_content += "| Arquivo | Linha | Campo | Tipo | Tamanho | Impacto | Status | Ação Necessária | Esforço Estimado |\n"
-                    report_content += "|---------|-------|-------|------|---------|---------|--------|-----------------|------------------|\n"
-                    
-                    for field in fields:
-                        if isinstance(field, dict):
-                            file_path = field.get('file_path', 'Unknown')
-                            line_number = field.get('line_number', '?')
-                            field_name = field.get('field_name', 'Unknown')
-                            field_type = field.get('field_type', 'Unknown')
-                            field_size = field.get('field_size', 'N/A')
-                            impact_level = field.get('impact_level', 'medio')
-                            status = field.get('status', 'precisa_analise')
-                            action_needed = field.get('action_needed', 'Análise manual necessária')
-                            estimated_effort = field.get('estimated_effort', 'A definir')
-                        else:
-                            file_path = field.file_path
-                            line_number = field.line_number
-                            field_name = field.field_name
-                            field_type = field.field_type
-                            field_size = field.field_size or 'N/A'
-                            impact_level = field.impact_level.value
-                            status = field.status.value
-                            action_needed = field.action_needed
-                            estimated_effort = field.estimated_effort
+                if category == 'code':
+                    # Processar subcategorias de código
+                    for subcategory, subcategory_fields in fields.items():
+                        if subcategory_fields:
+                            subcategory_name = self._get_subcategory_name(subcategory)
+                            report_content += f"\n## {subcategory_name}\n\n"
+                            report_content += "| Arquivo | Linha | Campo | Tipo | Tamanho | Impacto | Status | Ação Necessária | Esforço Estimado |\n"
+                            report_content += "|---------|-------|-------|------|---------|---------|--------|-----------------|------------------|\n"
+                            
+                            for field in subcategory_fields:
+                                if isinstance(field, dict):
+                                    file_path = field.get('file_path', 'Unknown')
+                                    line_number = field.get('line_number', '?')
+                                    field_name = field.get('field_name', 'Unknown')
+                                    field_type = field.get('field_type', 'Unknown')
+                                    field_size = field.get('field_size', 'N/A')
+                                    impact_level = field.get('impact_level', 'medio')
+                                    status = field.get('status', 'precisa_analise')
+                                    action_needed = field.get('action_needed', 'Análise manual necessária')
+                                    estimated_effort = field.get('estimated_effort', 'A definir')
+                                else:
+                                    # Usar a interface CNPJFieldInterface
+                                    file_path = field.get_file_path()
+                                    line_number = field.get_line_number()
+                                    field_name = field.get_field_name()
+                                    field_type = field.get_field_type()
+                                    field_size = field.field_size or 'N/A'
+                                    impact_level = field.get_impact_level()
+                                    status = field.get_status()
+                                    action_needed = field.get_action_needed()
+                                    estimated_effort = field.get_estimated_effort()
+                                
+                                report_content += f"| {file_path} | {line_number} | {field_name} | {field_type} | {field_size} | {impact_level} | {status} | {action_needed} | {estimated_effort} |\n"
+                else:
+                    # Processar outras categorias normalmente
+                    if fields:
+                        category_name = {
+                            'migrations': '📁 MIGRAÇÕES',
+                            'tests': '🧪 TESTES',
+                            'etl': '🗄️ ETL',
+                            'others': '📄 OUTROS'
+                        }.get(category, category.upper())
                         
-                        report_content += f"| {file_path} | {line_number} | {field_name} | {field_type} | {field_size} | {impact_level} | {status} | {action_needed} | {estimated_effort} |\n"
+                        report_content += f"\n## {category_name}\n\n"
+                        report_content += "| Arquivo | Linha | Campo | Tipo | Tamanho | Impacto | Status | Ação Necessária | Esforço Estimado |\n"
+                        report_content += "|---------|-------|-------|------|---------|---------|--------|-----------------|------------------|\n"
+                        
+                        for field in fields:
+                            if isinstance(field, dict):
+                                file_path = field.get('file_path', 'Unknown')
+                                line_number = field.get('line_number', '?')
+                                field_name = field.get('field_name', 'Unknown')
+                                field_type = field.get('field_type', 'Unknown')
+                                field_size = field.get('field_size', 'N/A')
+                                impact_level = field.get('impact_level', 'medio')
+                                status = field.get('status', 'precisa_analise')
+                                action_needed = field.get('action_needed', 'Análise manual necessária')
+                                estimated_effort = field.get('estimated_effort', 'A definir')
+                            else:
+                                # Usar a interface CNPJFieldInterface
+                                file_path = field.get_file_path()
+                                line_number = field.get_line_number()
+                                field_name = field.get_field_name()
+                                field_type = field.get_field_type()
+                                field_size = field.field_size or 'N/A'
+                                impact_level = field.get_impact_level()
+                                status = field.get_status()
+                                action_needed = field.get_action_needed()
+                                estimated_effort = field.get_estimated_effort()
+                            
+                            report_content += f"| {file_path} | {line_number} | {field_name} | {field_type} | {field_size} | {impact_level} | {status} | {action_needed} | {estimated_effort} |\n"
             
             # Adicionar validações e máscaras no final
             if validations:
                 report_content += "\n## 🔍 VALIDAÇÕES ENCONTRADAS\n\n"
                 for validation in validations[:20]:  # Limitar a 20
-                    report_content += f"- {validation.get('file_path', 'Unknown')}:{validation.get('line_number', '?')} - {validation.get('line', 'Unknown')}\n"
+                    if isinstance(validation, dict):
+                        file_path = validation.get('file_path', 'Unknown')
+                        line_number = validation.get('line_number', '?')
+                        line = validation.get('line', 'Unknown')
+                    else:
+                        # Usar a interface CNPJFieldInterface
+                        file_path = validation.get_file_path()
+                        line_number = validation.get_line_number()
+                        line = validation.get_context()
+                    report_content += f"- {file_path}:{line_number} - {line}\n"
             
             if masks:
                 report_content += "\n## 🎭 MÁSCARAS FRONTEND ENCONTRADAS\n\n"
                 for mask in masks[:20]:  # Limitar a 20
-                    report_content += f"- {mask.get('file_path', 'Unknown')}:{mask.get('line_number', '?')} - {mask.get('line', 'Unknown')}\n"
+                    if isinstance(mask, dict):
+                        file_path = mask.get('file_path', 'Unknown')
+                        line_number = mask.get('line_number', '?')
+                        line = mask.get('line', 'Unknown')
+                    else:
+                        # Usar a interface CNPJFieldInterface
+                        file_path = mask.get_file_path()
+                        line_number = mask.get_line_number()
+                        line = mask.get_context()
+                    report_content += f"- {file_path}:{line_number} - {line}\n"
             
             # Salvar arquivo
             with open(output_file, 'w', encoding='utf-8') as f:
@@ -513,10 +595,21 @@ Consulte o arquivo JSON para mais detalhes.
             self.logger.error(f"Erro ao gerar relatório Markdown: {e}")
 
     def _categorize_fields(self, cnpj_fields: List) -> Dict[str, List]:
-        """Categoriza campos CNPJ por tipo de arquivo"""
+        """Categoriza campos CNPJ por tipo de arquivo e subcategorias"""
         categorized = {
             'migrations': [],
-            'code': [],
+            'code': {
+                'validations': [],
+                'frontend_masks': [],
+                'repositories': [],
+                'interfaces': [],
+                'services': [],
+                'controllers': [],
+                'models': [],
+                'components': [],
+                'utils': [],
+                'other_code': []
+            },
             'tests': [],
             'etl': [],
             'others': []
@@ -525,8 +618,10 @@ Consulte o arquivo JSON para mais detalhes.
         for field in cnpj_fields:
             if isinstance(field, dict):
                 file_path = field.get('file_path', '')
+                field_type = field.get('field_type', '')
             else:
                 file_path = field.file_path
+                field_type = field.field_type
             
             file_path_lower = file_path.lower()
             
@@ -538,11 +633,101 @@ Consulte o arquivo JSON para mais detalhes.
             elif any(ext in file_path_lower for ext in ['.ktr', '.kjb', '.xml', 'pentaho', 'etl']):
                 categorized['etl'].append(field)
             elif any(ext in file_path_lower for ext in ['.php', '.js', '.ts', '.jsx', '.tsx', '.vue', '.py', '.java']):
-                categorized['code'].append(field)
+                # Subcategorizar código
+                subcategory = self._determine_code_subcategory(file_path, field_type, file_path_lower)
+                categorized['code'][subcategory].append(field)
             else:
                 categorized['others'].append(field)
         
         return categorized
+
+    def _determine_code_subcategory(self, file_path: str, field_type: str, file_path_lower: str) -> str:
+        """Determina a subcategoria de um campo de código"""
+        
+        # Validações
+        if field_type in ['VALIDATION_FUNCTION', 'FORM_VALIDATION']:
+            return 'validations'
+        
+        # Máscaras frontend
+        if field_type in ['MASK_FUNCTION', 'INPUT_MASK']:
+            return 'frontend_masks'
+        
+        # Repositories
+        if any(pattern in file_path_lower for pattern in ['repository', 'repo', 'dao', 'dataaccess']):
+            return 'repositories'
+        
+        # Interfaces
+        if any(pattern in file_path_lower for pattern in ['interface', 'contract', 'abstract']):
+            return 'interfaces'
+        
+        # Services
+        if any(pattern in file_path_lower for pattern in ['service', 'business', 'facade']):
+            return 'services'
+        
+        # Controllers
+        if any(pattern in file_path_lower for pattern in ['controller', 'handler', 'action']):
+            return 'controllers'
+        
+        # Models
+        if any(pattern in file_path_lower for pattern in ['model', 'entity', 'dto', 'vo']):
+            return 'models'
+        
+        # Components (UI)
+        if any(pattern in file_path_lower for pattern in ['component', 'molecule', 'atom', 'organism']):
+            return 'components'
+        
+        # Utils/Helpers
+        if any(pattern in file_path_lower for pattern in ['util', 'helper', 'helper', 'mixin', 'utility']):
+            return 'utils'
+        
+        # Outros códigos
+        return 'other_code'
+
+    def _count_code_fields(self, code_fields: Dict) -> int:
+        """Conta o total de campos de código em todas as subcategorias"""
+        total = 0
+        for subcategory_fields in code_fields.values():
+            total += len(subcategory_fields)
+        return total
+
+    def _format_code_subcategories(self, code_fields: Dict) -> str:
+        """Formata as subcategorias de código para exibição"""
+        subcategories_text = ""
+        subcategory_names = {
+            'validations': '🔍 Validações',
+            'frontend_masks': '🎭 Máscaras Frontend',
+            'repositories': '🗄️ Repositories',
+            'interfaces': '📋 Interfaces',
+            'services': '⚙️ Services',
+            'controllers': '🎮 Controllers',
+            'models': '📊 Models',
+            'components': '🧩 Components',
+            'utils': '🔧 Utils/Helpers',
+            'other_code': '💻 Outros Códigos'
+        }
+        
+        for subcategory, fields in code_fields.items():
+            if fields:
+                subcategory_name = subcategory_names.get(subcategory, subcategory.title())
+                subcategories_text += f"- **{subcategory_name}**: {len(fields)} campos\n"
+        
+        return subcategories_text if subcategories_text else "- *Nenhuma subcategoria encontrada*"
+
+    def _get_subcategory_name(self, subcategory: str) -> str:
+        """Retorna o nome formatado da subcategoria"""
+        subcategory_names = {
+            'validations': '🔍 VALIDAÇÕES',
+            'frontend_masks': '🎭 MÁSCARAS FRONTEND',
+            'repositories': '🗄️ REPOSITORIES',
+            'interfaces': '📋 INTERFACES',
+            'services': '⚙️ SERVICES',
+            'controllers': '🎮 CONTROLLERS',
+            'models': '📊 MODELS',
+            'components': '🧩 COMPONENTS',
+            'utils': '🔧 UTILS/HELPERS',
+            'other_code': '💻 OUTROS CÓDIGOS'
+        }
+        return subcategory_names.get(subcategory, subcategory.upper())
 
     def get_supported_types(self) -> Dict[str, str]:
         """Retorna os tipos de projeto suportados"""
@@ -654,7 +839,7 @@ def list_types():
 @app.command()
 def general_analysis(reports_dir: str = typer.Option("reports/", help="Diretório com relatórios de projetos")):
     """Gera relatório geral de todos os projetos analisados"""
-    from src.analyzers.general_analyzer import GeneralAnalyzer
+    from src.application.general_analyzer import GeneralAnalyzer
     
     print("🔍 Gerando relatório geral...")
     

@@ -12,8 +12,8 @@ from typing import Dict, List, Optional, Any, Type
 
 from rich.console import Console
 
-from ..dto import CNPJFieldInterface, ImpactLevel, Status, CNPJFieldBase
-from ..infrastructure.type_extractors.extractor_factory import TypeExtractorFactory
+from dto import CNPJFieldInterface, ImpactLevel, Status, CNPJFieldBase
+from infrastructure.type_extractors.extractor_factory import TypeExtractorFactory
 
 class BaseAnalyzer(ABC):
     """Classe base para todos os analisadores"""

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 from .base_analyzer import BaseAnalyzer
-from ..dto import CNPJFieldETL, CNPJFieldInterface, ImpactLevel, Status
+from dto import CNPJFieldETL, CNPJFieldInterface, ImpactLevel, Status
 
 class ETLAnalyzer(BaseAnalyzer):
     """Analisador específico para projetos ETL"""

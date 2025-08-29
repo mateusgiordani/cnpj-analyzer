@@ -8,13 +8,11 @@ import json
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-from analyzers import (
-    BaseAnalyzer,
-    PHPAnalyzer,
-    UIAnalyzer,
-    NestAnalyzer,
-    ETLAnalyzer
-)
+from application.base_analyzer import BaseAnalyzer
+from application.php_analyzer import PHPAnalyzer
+from application.ui_analyzer import UIAnalyzer
+from application.nest_analyzer import NestAnalyzer
+from application.etl_analyzer import ETLAnalyzer
 
 class AnalyzerFactory:
     """Factory para criar analisadores específicos por tipo de projeto"""
@@ -195,6 +193,8 @@ class AnalyzerFactory:
         """Analisa um projeto usando o analisador apropriado"""
         project_type = self.detect_project_type(project_path)
         analyzer = self.create_analyzer(project_type)
+        
+
         
         # Analisar o projeto
         result = analyzer.analyze_project(project_path, filters)

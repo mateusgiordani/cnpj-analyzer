@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 from .base_analyzer import BaseAnalyzer
-from ..dto import CNPJFieldUI, CNPJFieldInterface, ImpactLevel, Status
+from dto import CNPJFieldUI, CNPJFieldInterface, ImpactLevel, Status
 
 class UIAnalyzer(BaseAnalyzer):
     """Analisador específico para projetos de UI"""
