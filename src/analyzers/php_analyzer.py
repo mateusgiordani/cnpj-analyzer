@@ -255,13 +255,15 @@ class PHPAnalyzer(BaseAnalyzer):
         
         if field_type in ['VARCHAR', 'CHAR']:
             if field_size is None:
-                return ImpactLevel.MEDIUM, Status.NEEDS_ANALYSIS, 'Verificar tamanho do campo'
+                return ImpactLevel.LOW, Status.COMPATIBLE, 'Campo sem tamanho definido é compatível'
             elif field_size < 14:
                 return ImpactLevel.CRITICAL, Status.INCOMPATIBLE, f'CRÍTICO: Tamanho {field_size} < 14. Alterar para VARCHAR(18)'
+            elif field_size == 14:
+                return ImpactLevel.LOW, Status.COMPATIBLE, 'Tamanho 14 é compatível com CNPJ atual'
             elif field_size < 18:
-                return ImpactLevel.MEDIUM, Status.ATTENTION, f'Aumentar tamanho de {field_size} para 18'
+                return ImpactLevel.MEDIUM, Status.ATTENTION, f'Aumentar tamanho de {field_size} para 18 para CNPJ alfanumérico'
             else:
-                return ImpactLevel.LOW, Status.COMPATIBLE, 'Nenhuma alteração necessária'
+                return ImpactLevel.LOW, Status.COMPATIBLE, 'Tamanho adequado para CNPJ alfanumérico'
         
         elif field_type in ['TEXT']:
             return ImpactLevel.LOW, Status.COMPATIBLE, 'Campo TEXT é compatível'
