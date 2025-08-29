@@ -651,5 +651,34 @@ def list_types():
     
     console.print(table)
 
+@app.command()
+def general_analysis(reports_dir: str = typer.Option("reports/", help="Diretório com relatórios de projetos")):
+    """Gera relatório geral de todos os projetos analisados"""
+    from src.analyzers.general_analyzer import GeneralAnalyzer
+    
+    print("🔍 Gerando relatório geral...")
+    
+    # Usar a pasta Azure como padrão
+    projects_folder = os.path.expanduser("~/Documents/Azure")
+    
+    analyzer = GeneralAnalyzer(reports_dir)
+    analysis_data = analyzer.analyze_all_projects(projects_folder)
+    
+    # Gerar relatório Markdown
+    output_file = analyzer.generate_markdown_report(analysis_data)
+    
+    print(f"✅ Relatório geral salvo em: {output_file}")
+    
+    # Mostrar resumo
+    stats = analysis_data.get('statistics', {})
+    critical_projects = analysis_data.get('critical_projects', 0)
+    
+    print(f"\n📊 RESUMO:")
+    print(f"   Total de projetos: {analysis_data.get('total_projects', 0)}")
+    print(f"   Projetos com pontos críticos: {critical_projects}")
+    print(f"   Total de campos CNPJ: {stats.get('total_fields', 0)}")
+    print(f"   Campos críticos: {stats.get('total_critical_fields', 0)}")
+    print(f"   Campos de alto impacto: {stats.get('total_high_impact_fields', 0)}")
+
 if __name__ == "__main__":
     app()

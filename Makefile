@@ -66,6 +66,10 @@ analyze-all: ## Analisa todos os projetos configurados
 	@echo "$(BLUE)Analisando todos os projetos configurados...$(NC)"
 	$(PYTHON) $(ANALYZER_SCRIPT) analyze-all --output reports/
 
+general-analysis: ## Gera relatório geral de todos os projetos analisados
+	@echo "$(BLUE)Gerando relatório geral...$(NC)"
+	$(PYTHON) $(ANALYZER_SCRIPT) general-analysis --reports-dir reports/
+
 analyze-folder: ## Analisa todos os projetos em uma pasta (use FOLDER=./caminho/da/pasta)
 	@if [ -z "$(FOLDER)" ]; then \
 		echo "$(RED)Erro: Especifique a pasta com FOLDER=./caminho/da/pasta$(NC)"; \
