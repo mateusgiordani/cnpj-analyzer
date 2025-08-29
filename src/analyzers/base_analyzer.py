@@ -221,8 +221,8 @@ class BaseAnalyzer(ABC):
         int_match = re.search(r'INT|BIGINT', line, re.IGNORECASE)
         
         # Padrões para migrations do Phinx (PHP)
-        phinx_string_match = re.search(r"'string',\s*\[\s*'length'\s*=>\s*(\d+)\s*\]", line, re.IGNORECASE)
-        phinx_char_match = re.search(r"'char',\s*\[\s*'length'\s*=>\s*(\d+)\s*\]", line, re.IGNORECASE)
+        phinx_string_match = re.search(r"'string'.*'length'.*=>\s*(\d+)", line, re.IGNORECASE)
+        phinx_char_match = re.search(r"'char'.*'length'.*=>\s*(\d+)", line, re.IGNORECASE)
         phinx_text_match = re.search(r"'text'", line, re.IGNORECASE)
         phinx_integer_match = re.search(r"'integer'", line, re.IGNORECASE)
         
