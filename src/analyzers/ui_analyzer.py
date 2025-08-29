@@ -7,7 +7,7 @@ Data: 2025-01-27
 import re
 import json
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from analyzers.base_analyzer import BaseAnalyzer, CNPJField, ImpactLevel, Status
 
@@ -358,13 +358,13 @@ class UIAnalyzer(BaseAnalyzer):
         
         return validations
 
-    def analyze_project(self, project_path: Path) -> Dict[str, Any]:
+    def analyze_project(self, project_path: Path, filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Analisa um projeto de UI e retorna os resultados"""
         project_name = project_path.name if hasattr(project_path, 'name') else str(project_path).split('/')[-1]
         self.console.print(f"[blue]Analisando projeto UI ({self.framework}): {project_name}[/blue]")
         
         # Escanear arquivos
-        files = self.scan_files(project_path)
+        files = self.scan_files(project_path, filters)
         
         # Escanear package.json
         package_info = self.scan_package_json(project_path)
@@ -396,17 +396,33 @@ class UIAnalyzer(BaseAnalyzer):
         # Encontrar padrões UI específicos
         ui_patterns = self.find_ui_specific_patterns(files)
         
+        # Combinar todos os campos encontrados
+        all_fields = cnpj_fields + validations + masks + input_masks + form_validations
+        
+        # Determinar impacto geral
+        if all_fields:
+            if len(all_fields) > 10:
+                overall_impact = ImpactLevel.HIGH
+            elif len(all_fields) > 5:
+                overall_impact = ImpactLevel.MEDIUM
+            else:
+                overall_impact = ImpactLevel.LOW
+        else:
+            overall_impact = ImpactLevel.LOW  # Sem campos = baixo impacto
+        
         return {
-            'project_type': self.project_type,
-            'framework': self.framework,
-            'total_files_scanned': len(files),
-            'package_info': package_info,
-            'cnpj_fields_found': cnpj_fields,
-            'validations': validations,
+            'project_name': project_path.name,
+            'project_path': str(project_path),
+            'project_type': f"ui_{self.framework}",
+            'cnpj_fields_found': all_fields,
+            'validations_found': validations,
             'frontend_masks': masks,
+            'overall_impact': overall_impact.value if overall_impact else 'baixo',
+            'files_scanned': len(files),
+            'framework_detected': self.framework,
+            'package_info': package_info,
             'input_masks': input_masks,
             'form_validations': form_validations,
             'framework_specific': framework_specific,
-            'ui_patterns': ui_patterns,
-            'files': files
+            'ui_patterns': ui_patterns
         }
