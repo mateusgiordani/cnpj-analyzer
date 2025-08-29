@@ -214,12 +214,24 @@ class BaseAnalyzer(ABC):
 
     def _extract_field_type_and_size(self, line: str) -> tuple:
         """Extrai tipo e tamanho do campo da linha"""
-        # Padrões para diferentes tipos de campo
+        # Padrões para diferentes tipos de campo SQL padrão
         varchar_match = re.search(r'VARCHAR\s*\(\s*(\d+)\s*\)', line, re.IGNORECASE)
         char_match = re.search(r'CHAR\s*\(\s*(\d+)\s*\)', line, re.IGNORECASE)
         text_match = re.search(r'TEXT', line, re.IGNORECASE)
         int_match = re.search(r'INT|BIGINT', line, re.IGNORECASE)
         
+        # Padrões para migrations do Phinx (PHP)
+        phinx_string_match = re.search(r"'string',\s*\[\s*'length'\s*=>\s*(\d+)\s*\]", line, re.IGNORECASE)
+        phinx_char_match = re.search(r"'char',\s*\[\s*'length'\s*=>\s*(\d+)\s*\]", line, re.IGNORECASE)
+        phinx_text_match = re.search(r"'text'", line, re.IGNORECASE)
+        phinx_integer_match = re.search(r"'integer'", line, re.IGNORECASE)
+        
+        # Padrões para Laravel migrations
+        laravel_string_match = re.search(r'\$table->string\s*\(\s*[\'"][^\'"]+[\'"]\s*,\s*(\d+)\s*\)', line, re.IGNORECASE)
+        laravel_integer_match = re.search(r'\$table->integer\s*\(\s*[\'"][^\'"]+[\'"]\s*\)', line, re.IGNORECASE)
+        laravel_text_match = re.search(r'\$table->text\s*\(\s*[\'"][^\'"]+[\'"]\s*\)', line, re.IGNORECASE)
+        
+        # Verificar padrões SQL primeiro
         if varchar_match:
             return 'VARCHAR', int(varchar_match.group(1))
         elif char_match:
@@ -228,6 +240,25 @@ class BaseAnalyzer(ABC):
             return 'TEXT', None
         elif int_match:
             return 'INTEGER', None
+        
+        # Verificar padrões Phinx
+        elif phinx_string_match:
+            return 'VARCHAR', int(phinx_string_match.group(1))
+        elif phinx_char_match:
+            return 'CHAR', int(phinx_char_match.group(1))
+        elif phinx_text_match:
+            return 'TEXT', None
+        elif phinx_integer_match:
+            return 'INTEGER', None
+        
+        # Verificar padrões Laravel
+        elif laravel_string_match:
+            return 'VARCHAR', int(laravel_string_match.group(1))
+        elif laravel_integer_match:
+            return 'INTEGER', None
+        elif laravel_text_match:
+            return 'TEXT', None
+        
         else:
             return 'UNKNOWN', None
 
