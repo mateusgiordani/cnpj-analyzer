@@ -388,7 +388,7 @@ class PHPAnalyzer(BaseAnalyzer):
             'cnpj_fields_found': all_fields,
             'validations_found': [],
             'frontend_masks': [],
-            'overall_impact': overall_impact,
+            'overall_impact': overall_impact.value if overall_impact else 'none',
             'files_scanned': len(scanned_files),
             'framework_detected': self._detect_framework(),
             'categories': {
