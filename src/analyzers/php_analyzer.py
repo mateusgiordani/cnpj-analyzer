@@ -5,69 +5,261 @@ Data: 2025-01-27
 """
 
 import re
+import json
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass
 
-from analyzers.base_analyzer import BaseAnalyzer, CNPJField, ImpactLevel, Status
+from .base_analyzer import BaseAnalyzer, CNPJField, ImpactLevel, Status
 
-class PHPAnalyzer(BaseAnalyzer):
-    """Analisador específico para projetos PHP"""
+
+@dataclass
+class PHPFieldDefinition:
+    """Representa uma definição de campo PHP encontrada"""
+    file_path: str
+    line_number: int
+    field_name: str
+    field_type: str
+    field_size: Optional[int]
+    context: str
+    category: str  # 'migration', 'model', 'validation', 'test'
+
+
+class PHPMigrationAnalyzer:
+    """Analisador específico para migrations PHP (Phinx, Laravel, Hyperf)"""
     
-    def __init__(self, framework: str = "php"):
-        super().__init__(f"php_{framework}")
-        self.framework = framework
-        
-        # Padrões específicos para PHP
-        self.php_patterns = {
-            'laravel': {
-                'migration_patterns': [
-                    r'public\s+function\s+up\s*\(\s*\)',
-                    r'Schema::create\s*\(\s*[\'"]([^\'"]+)[\'"]',
-                    r'\$table->string\s*\(\s*[\'"]([^\'"]+)[\'"]\s*,\s*(\d+)\s*\)',
-                    r'\$table->integer\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)'
-                ],
-                'model_patterns': [
-                    r'protected\s+\$fillable\s*=\s*\[',
-                    r'protected\s+\$casts\s*=\s*\[',
-                    r'public\s+function\s+([a-zA-Z_]+)\s*\(\s*\)'
-                ],
-                'validation_patterns': [
-                    r'Rule::cnpj\s*\(\s*\)',
-                    r'cnpj\s*[,|]',
-                    r'validat.*cnpj',
-                    r'cnpj.*validat'
-                ]
-            },
-            'symfony': {
-                'entity_patterns': [
-                    r'@ORM\\Column\s*\(\s*type\s*=\s*[\'"]([^\'"]+)[\'"]',
-                    r'@Assert\\Regex\s*\(\s*pattern\s*=\s*[\'"]([^\'"]+)[\'"]',
-                    r'private\s+\$([a-zA-Z_]+)\s*:'
-                ],
-                'validation_patterns': [
-                    r'@Assert\\Regex',
-                    r'@Assert\\Length',
-                    r'cnpj.*constraint'
-                ]
-            },
-            'hyperf': {
-                'model_patterns': [
-                    r'@Column\s*\(\s*type\s*=\s*[\'"]([^\'"]+)[\'"]',
-                    r'protected\s+\$([a-zA-Z_]+)\s*;',
-                    r'public\s+function\s+([a-zA-Z_]+)\s*\(\s*\)'
-                ],
-                'validation_patterns': [
-                    r'@Validator\s*\(\s*[\'"]([^\'"]+)[\'"]',
-                    r'cnpj.*rule',
-                    r'rule.*cnpj'
-                ]
+    def __init__(self):
+        self.migration_patterns = {
+            'phinx': {
+                'field_definition': r'\$table->addColumn\s*\(\s*[\'"]([^\'"]+)[\'"]\s*,\s*[\'"]([^\'"]+)[\'"]([^)]*)\)',
+                'laravel_field': r'\$table->(\w+)\s*\(\s*[\'"]([^\'"]+)[\'"]([^)]*)\)',
+                'index_reference': r'[\'"]([^\'"]+)[\'"]\s*[,\]]',  # Para detectar referências em índices
             }
         }
+    
+    def analyze_migration_file(self, file_path: str, content: str) -> List[PHPFieldDefinition]:
+        """Analisa um arquivo de migration e retorna apenas definições de campos"""
+        fields = []
+        lines = content.split('\n')
+        
+        for line_num, line in enumerate(lines, 1):
+            # Pular linhas que são apenas referências em índices
+            if self._is_index_reference(line):
+                continue
+                
+            # Buscar definições de campos Phinx
+            phinx_match = re.search(self.migration_patterns['phinx']['field_definition'], line)
+            if phinx_match:
+                field_name = phinx_match.group(1)
+                field_type = phinx_match.group(2)
+                options = phinx_match.group(3)
+                
+                if self._is_cnpj_field(field_name):
+                    field_size = self._extract_field_size(options)
+                    fields.append(PHPFieldDefinition(
+                        file_path=file_path,
+                        line_number=line_num,
+                        field_name=field_name,
+                        field_type=field_type,
+                        field_size=field_size,
+                        context=line.strip(),
+                        category='migration'
+                    ))
+                continue
+            
+            # Buscar definições de campos Laravel
+            laravel_match = re.search(self.migration_patterns['phinx']['laravel_field'], line)
+            if laravel_match:
+                method = laravel_match.group(1)
+                field_name = laravel_match.group(2)
+                options = laravel_match.group(3)
+                
+                if self._is_cnpj_field(field_name):
+                    field_size = self._extract_field_size(options)
+                    fields.append(PHPFieldDefinition(
+                        file_path=file_path,
+                        line_number=line_num,
+                        field_name=field_name,
+                        field_type=method,
+                        field_size=field_size,
+                        context=line.strip(),
+                        category='migration'
+                    ))
+        
+        return fields
+    
+    def _is_index_reference(self, line: str) -> bool:
+        """Verifica se a linha é apenas uma referência em índice"""
+        # Padrões que indicam referência em índice
+        index_patterns = [
+            r'addIndex\s*\(',
+            r'addUnique\s*\(',
+            r'addForeignKey\s*\(',
+            r'index\s*\(',
+            r'unique\s*\(',
+        ]
+        
+        for pattern in index_patterns:
+            if re.search(pattern, line):
+                return True
+        return False
+    
+    def _is_cnpj_field(self, field_name: str) -> bool:
+        """Verifica se o campo é relacionado a CNPJ"""
+        cnpj_patterns = [
+            r'cnpj',
+            r'cpf_cnpj',
+            r'cpfcnpj',
+            r'cpfCnpj',
+            r'cpfcnpj',
+            r'cnpj_cpf',
+            r'cnpjcpf',
+        ]
+        
+        field_lower = field_name.lower()
+        return any(re.search(pattern, field_lower) for pattern in cnpj_patterns)
+    
+    def _extract_field_size(self, options: str) -> Optional[int]:
+        """Extrai o tamanho do campo das opções"""
+        # Buscar 'length' => X
+        length_match = re.search(r"'length'\s*=>\s*(\d+)", options)
+        if length_match:
+            return int(length_match.group(1))
+        
+        # Buscar length como segundo parâmetro (Laravel)
+        length_match = re.search(r',\s*(\d+)', options)
+        if length_match:
+            return int(length_match.group(1))
+        
+        return None
 
+
+class PHPCodeAnalyzer:
+    """Analisador para código PHP (models, services, etc.)"""
+    
+    def __init__(self):
+        self.code_patterns = {
+            'property': r'(?:public|private|protected)\s+\$(\w+)',
+            'variable': r'\$(\w+)\s*=',
+            'parameter': r'function\s+\w+\s*\([^)]*\$(\w+)[^)]*\)',
+        }
+    
+    def analyze_code_file(self, file_path: str, content: str) -> List[PHPFieldDefinition]:
+        """Analisa um arquivo de código PHP"""
+        fields = []
+        lines = content.split('\n')
+        
+        for line_num, line in enumerate(lines, 1):
+            # Buscar propriedades de classe
+            prop_match = re.search(self.code_patterns['property'], line)
+            if prop_match:
+                field_name = prop_match.group(1)
+                if self._is_cnpj_field(field_name):
+                    fields.append(PHPFieldDefinition(
+                        file_path=file_path,
+                        line_number=line_num,
+                        field_name=field_name,
+                        field_type='PROPERTY',
+                        field_size=None,
+                        context=line.strip(),
+                        category='code'
+                    ))
+                continue
+            
+            # Buscar variáveis
+            var_match = re.search(self.code_patterns['variable'], line)
+            if var_match:
+                field_name = var_match.group(1)
+                if self._is_cnpj_field(field_name):
+                    fields.append(PHPFieldDefinition(
+                        file_path=file_path,
+                        line_number=line_num,
+                        field_name=field_name,
+                        field_type='VARIABLE',
+                        field_size=None,
+                        context=line.strip(),
+                        category='code'
+                    ))
+        
+        return fields
+    
+    def _is_cnpj_field(self, field_name: str) -> bool:
+        """Verifica se o campo é relacionado a CNPJ"""
+        cnpj_patterns = [
+            r'cnpj',
+            r'cpf_cnpj',
+            r'cpfcnpj',
+            r'cpfCnpj',
+            r'cpfcnpj',
+            r'cnpj_cpf',
+            r'cnpjcpf',
+        ]
+        
+        field_lower = field_name.lower()
+        return any(re.search(pattern, field_lower) for pattern in cnpj_patterns)
+
+
+class PHPValidationAnalyzer:
+    """Analisador para validações PHP"""
+    
+    def __init__(self):
+        self.validation_patterns = {
+            'rule': r'[\'"]([^\'"]*cnpj[^\'"]*)[\'"]',
+            'validator': r'CNPJ|Cnpj',
+            'validation_method': r'validateCnpj|validate_cnpj',
+        }
+    
+    def analyze_validation_file(self, file_path: str, content: str) -> List[PHPFieldDefinition]:
+        """Analisa um arquivo de validação PHP"""
+        fields = []
+        lines = content.split('\n')
+        
+        for line_num, line in enumerate(lines, 1):
+            # Buscar regras de validação
+            rule_match = re.search(self.validation_patterns['rule'], line, re.IGNORECASE)
+            if rule_match:
+                rule = rule_match.group(1)
+                fields.append(PHPFieldDefinition(
+                    file_path=file_path,
+                    line_number=line_num,
+                    field_name=f"validation_rule_{line_num}",
+                    field_type='VALIDATION_RULE',
+                    field_size=None,
+                    context=line.strip(),
+                    category='validation'
+                ))
+                continue
+            
+            # Buscar validadores
+            validator_match = re.search(self.validation_patterns['validator'], line)
+            if validator_match:
+                fields.append(PHPFieldDefinition(
+                    file_path=file_path,
+                    line_number=line_num,
+                    field_name=f"validator_{line_num}",
+                    field_type='VALIDATOR',
+                    field_size=None,
+                    context=line.strip(),
+                    category='validation'
+                ))
+        
+        return fields
+
+
+class PHPAnalyzer(BaseAnalyzer):
+    """Analisador principal para projetos PHP"""
+    
+    def __init__(self, project_path: Path):
+        super().__init__('php')
+        self.project_path = project_path
+        self.migration_analyzer = PHPMigrationAnalyzer()
+        self.code_analyzer = PHPCodeAnalyzer()
+        self.validation_analyzer = PHPValidationAnalyzer()
+    
     def get_file_extensions(self) -> List[str]:
         """Retorna as extensões de arquivo suportadas"""
         return ['.php', '.sql', '.yml', '.yaml']
-
+    
     def get_skip_patterns(self) -> List[str]:
         """Retorna padrões de arquivos/pastas para ignorar"""
         return [
@@ -75,252 +267,232 @@ class PHPAnalyzer(BaseAnalyzer):
             '.venv', 'venv', 'dist', 'build', '.next', '.nuxt',
             'storage', 'bootstrap/cache', 'public/build'
         ]
-
-    def scan_database_files(self, project_path: Path) -> List[Dict]:
-        """Escaneia arquivos específicos de banco de dados"""
-        database_files = []
-        
-        # Buscar arquivos de migração
-        migration_patterns = [
-            'database/migrations/*.php',
-            'migrations/*.php',
-            'db/migrations/*.php',
-            'src/Migration/*.php',
-            '**/migrations/*.php',
-            '**/Migrations/*.php'
-        ]
-        
-        for pattern in migration_patterns:
-            for file_path in project_path.rglob(pattern):
-                if file_path.is_file():
-                    try:
-                        content = file_path.read_text(encoding='utf-8', errors='ignore')
-                        database_files.append({
-                            'file_path': str(file_path),
-                            'content': content,
-                            'type': 'migration'
-                        })
-                        self.logger.info(f"Migração encontrada: {file_path}")
-                    except Exception as e:
-                        self.logger.warning(f"Erro ao ler migração {file_path}: {e}")
-        
-        # Buscar arquivos que contenham "migration" no nome
-        for file_path in project_path.rglob('*'):
-            if file_path.is_file() and 'migration' in file_path.name.lower() and file_path.suffix == '.php':
-                if str(file_path) not in [f['file_path'] for f in database_files]:
-                    try:
-                        content = file_path.read_text(encoding='utf-8', errors='ignore')
-                        database_files.append({
-                            'file_path': str(file_path),
-                            'content': content,
-                            'type': 'migration'
-                        })
-                        self.logger.info(f"Migração por nome encontrada: {file_path}")
-                    except Exception as e:
-                        self.logger.warning(f"Erro ao ler migração {file_path}: {e}")
-        
-        # Buscar arquivos SQL
-        for file_path in project_path.rglob('*.sql'):
-            if file_path.is_file():
-                try:
-                    content = file_path.read_text(encoding='utf-8', errors='ignore')
-                    database_files.append({
-                        'file_path': str(file_path),
-                        'content': content,
-                        'type': 'sql'
-                    })
-                except Exception as e:
-                    self.logger.warning(f"Erro ao ler SQL {file_path}: {e}")
-        
-        return database_files
-
-    def find_php_specific_patterns(self, files: List[Dict]) -> Dict[str, List[Dict]]:
-        """Encontra padrões específicos do PHP"""
-        patterns = self.php_patterns.get(self.framework, {})
-        results = {}
-        
-        for pattern_type, pattern_list in patterns.items():
-            results[pattern_type] = []
-            
-            for file_info in files:
-                file_path = file_info['file_path']
-                content = file_info['content']
-                lines = content.split('\n')
-                
-                for line_num, line in enumerate(lines, 1):
-                    for pattern in pattern_list:
-                        if re.search(pattern, line, re.IGNORECASE):
-                            results[pattern_type].append({
-                                'file_path': file_path,
-                                'line_number': line_num,
-                                'line': line.strip(),
-                                'pattern_type': pattern_type
-                            })
-        
-        return results
-
-    def find_laravel_specific(self, files: List[Dict]) -> Dict[str, List[Dict]]:
-        """Encontra padrões específicos do Laravel"""
-        if self.framework != 'laravel':
-            return {}
-        
-        laravel_patterns = {
-            'models': [],
-            'controllers': [],
-            'requests': [],
-            'resources': []
-        }
-        
-        for file_info in files:
-            file_path = file_info['file_path']
-            content = file_info['content']
-            
-            # Detectar tipos de arquivo Laravel
-            if 'app/Models/' in file_path or 'app/Model/' in file_path:
-                laravel_patterns['models'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'app/Http/Controllers/' in file_path:
-                laravel_patterns['controllers'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'app/Http/Requests/' in file_path:
-                laravel_patterns['requests'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'app/Http/Resources/' in file_path:
-                laravel_patterns['resources'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-        
-        return laravel_patterns
-
-    def find_symfony_specific(self, files: List[Dict]) -> Dict[str, List[Dict]]:
-        """Encontra padrões específicos do Symfony"""
-        if self.framework != 'symfony':
-            return {}
-        
-        symfony_patterns = {
-            'entities': [],
-            'controllers': [],
-            'forms': [],
-            'validators': []
-        }
-        
-        for file_info in files:
-            file_path = file_info['file_path']
-            content = file_info['content']
-            
-            # Detectar tipos de arquivo Symfony
-            if 'Entity/' in file_path or 'entity/' in file_path:
-                symfony_patterns['entities'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'Controller/' in file_path or 'controller/' in file_path:
-                symfony_patterns['controllers'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'Form/' in file_path or 'form/' in file_path:
-                symfony_patterns['forms'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'Validator/' in file_path or 'validator/' in file_path:
-                symfony_patterns['validators'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-        
-        return symfony_patterns
-
-    def find_hyperf_specific(self, files: List[Dict]) -> Dict[str, List[Dict]]:
-        """Encontra padrões específicos do Hyperf"""
-        if self.framework != 'hyperf':
-            return {}
-        
-        hyperf_patterns = {
-            'models': [],
-            'controllers': [],
-            'validators': [],
-            'middleware': []
-        }
-        
-        for file_info in files:
-            file_path = file_info['file_path']
-            content = file_info['content']
-            
-            # Detectar tipos de arquivo Hyperf
-            if 'Model/' in file_path or 'model/' in file_path:
-                hyperf_patterns['models'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'Controller/' in file_path or 'controller/' in file_path:
-                hyperf_patterns['controllers'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'Validator/' in file_path or 'validator/' in file_path:
-                hyperf_patterns['validators'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-            elif 'Middleware/' in file_path or 'middleware/' in file_path:
-                hyperf_patterns['middleware'].append({
-                    'file_path': file_path,
-                    'content': content
-                })
-        
-        return hyperf_patterns
-
+    
     def analyze_project(self, project_path: Path, filters: Optional[Dict] = None) -> Dict[str, Any]:
-        """Analisa um projeto PHP e retorna os resultados"""
-        project_name = project_path.name if hasattr(project_path, 'name') else str(project_path).split('/')[-1]
-        self.console.print(f"[blue]Analisando projeto PHP ({self.framework}): {project_name}[/blue]")
+        """Analisa um projeto PHP"""
+        print(f"🔍 Analisando projeto PHP: {project_path.name}")
         
-        # Escanear arquivos gerais com filtros
-        files = self.scan_files(project_path, filters)
+        # Escanear arquivos
+        scanned_files = self.scan_files(project_path)
         
-        # Escanear arquivos de banco
-        database_files = self.scan_database_files(project_path)
+        # Categorizar arquivos
+        migration_files = []
+        code_files = []
+        validation_files = []
+        test_files = []
         
-        # Encontrar campos CNPJ
-        cnpj_fields = self.find_cnpj_fields(files + database_files)
+        for file_info in scanned_files:
+            file_path = file_info['file_path']
+            content = file_info['content']
+            
+            if self._is_migration_file(file_path):
+                migration_files.append((file_path, content))
+            elif self._is_test_file(file_path):
+                test_files.append((file_path, content))
+            elif self._is_validation_file(file_path):
+                validation_files.append((file_path, content))
+            else:
+                code_files.append((file_path, content))
         
-        # Encontrar validações
-        validations = self.find_validations(files)
+        # Analisar cada categoria
+        migration_fields = self._analyze_migrations(migration_files)
+        code_fields = self._analyze_code(code_files)
+        validation_fields = self._analyze_validations(validation_files)
+        test_fields = self._analyze_tests(test_files)
         
-        # Encontrar máscaras
-        masks = self.find_frontend_masks(files)
+        # Converter para CNPJField
+        all_fields = []
         
-        # Encontrar padrões específicos do framework
-        framework_specific = {}
-        if self.framework == 'laravel':
-            framework_specific = self.find_laravel_specific(files)
-        elif self.framework == 'symfony':
-            framework_specific = self.find_symfony_specific(files)
-        elif self.framework == 'hyperf':
-            framework_specific = self.find_hyperf_specific(files)
+        # Migrations
+        for field in migration_fields:
+            field_type, field_size = self._map_php_type_to_sql(field.field_type, field.field_size)
+            impact_level, status, action_needed = self._assess_impact(field_type, field_size)
+            
+            all_fields.append(CNPJField(
+                file_path=field.file_path,
+                line_number=field.line_number,
+                field_name=field.field_name,
+                field_type=field_type,
+                field_size=field_size,
+                context=field.context,
+                project_type='php_migration',
+                impact_level=impact_level,
+                status=status,
+                action_needed=action_needed,
+                estimated_effort=self._estimate_effort(impact_level)
+            ))
         
-        # Encontrar padrões PHP específicos
-        php_patterns = self.find_php_specific_patterns(files)
+        # Código
+        for field in code_fields:
+            all_fields.append(CNPJField(
+                file_path=field.file_path,
+                line_number=field.line_number,
+                field_name=field.field_name,
+                field_type=field.field_type,
+                field_size=field.field_size,
+                context=field.context,
+                project_type='php_code',
+                impact_level=ImpactLevel.MEDIUM,
+                status=Status.NEEDS_ANALYSIS,
+                action_needed='Revisar uso do campo CNPJ',
+                estimated_effort='2-4 horas'
+            ))
+        
+        # Validações
+        for field in validation_fields:
+            all_fields.append(CNPJField(
+                file_path=field.file_path,
+                line_number=field.line_number,
+                field_name=field.field_name,
+                field_type=field.field_type,
+                field_size=field.field_size,
+                context=field.context,
+                project_type='php_validation',
+                impact_level=ImpactLevel.HIGH,
+                status=Status.NEEDS_ANALYSIS,
+                action_needed='Atualizar validação para CNPJ alfanumérico',
+                estimated_effort='4-8 horas'
+            ))
+        
+        # Testes
+        for field in test_fields:
+            all_fields.append(CNPJField(
+                file_path=field.file_path,
+                line_number=field.line_number,
+                field_name=field.field_name,
+                field_type=field.field_type,
+                field_size=field.field_size,
+                context=field.context,
+                project_type='php_test',
+                impact_level=ImpactLevel.MEDIUM,
+                status=Status.NEEDS_ANALYSIS,
+                action_needed='Atualizar testes para CNPJ alfanumérico',
+                estimated_effort='2-4 horas'
+            ))
+        
+        # Determinar impacto geral
+        if all_fields:
+            if len(all_fields) > 10:
+                overall_impact = ImpactLevel.HIGH
+            elif len(all_fields) > 5:
+                overall_impact = ImpactLevel.MEDIUM
+            else:
+                overall_impact = ImpactLevel.LOW
+        else:
+            overall_impact = ImpactLevel.NONE
         
         return {
-            'project_type': self.project_type,
-            'framework': self.framework,
-            'total_files_scanned': len(files),
-            'database_files_scanned': len(database_files),
-            'cnpj_fields_found': cnpj_fields,
-            'validations': validations,
-            'frontend_masks': masks,
-            'framework_specific': framework_specific,
-            'php_patterns': php_patterns,
-            'files': files,
-            'database_files': database_files
+            'project_name': project_path.name,
+            'project_path': str(project_path),
+            'project_type': 'php',
+            'cnpj_fields_found': all_fields,
+            'validations_found': [],
+            'frontend_masks': [],
+            'overall_impact': overall_impact,
+            'files_scanned': len(scanned_files),
+            'framework_detected': self._detect_framework(),
+            'categories': {
+                'migrations': len(migration_fields),
+                'code': len(code_fields),
+                'validations': len(validation_fields),
+                'tests': len(test_fields),
+            }
         }
+    
+    def _analyze_migrations(self, migration_files: List[tuple]) -> List[PHPFieldDefinition]:
+        """Analisa arquivos de migration"""
+        fields = []
+        for file_path, content in migration_files:
+            fields.extend(self.migration_analyzer.analyze_migration_file(file_path, content))
+        return fields
+    
+    def _analyze_code(self, code_files: List[tuple]) -> List[PHPFieldDefinition]:
+        """Analisa arquivos de código"""
+        fields = []
+        for file_path, content in code_files:
+            fields.extend(self.code_analyzer.analyze_code_file(file_path, content))
+        return fields
+    
+    def _analyze_validations(self, validation_files: List[tuple]) -> List[PHPFieldDefinition]:
+        """Analisa arquivos de validação"""
+        fields = []
+        for file_path, content in validation_files:
+            fields.extend(self.validation_analyzer.analyze_validation_file(file_path, content))
+        return fields
+    
+    def _analyze_tests(self, test_files: List[tuple]) -> List[PHPFieldDefinition]:
+        """Analisa arquivos de teste"""
+        # Por enquanto, usar o mesmo analisador de código para testes
+        fields = []
+        for file_path, content in test_files:
+            fields.extend(self.code_analyzer.analyze_code_file(file_path, content))
+        return fields
+    
+    def _is_migration_file(self, file_path: str) -> bool:
+        """Verifica se é um arquivo de migration"""
+        return (
+            'migration' in file_path.lower() or
+            'db/migrations' in file_path or
+            file_path.endswith('_migration.php') or
+            re.search(r'\d{14}_.*\.php$', file_path)  # Padrão Laravel
+        )
+    
+    def _is_test_file(self, file_path: str) -> bool:
+        """Verifica se é um arquivo de teste"""
+        return (
+            'test' in file_path.lower() or
+            'spec' in file_path.lower() or
+            'tests/' in file_path or
+            file_path.endswith('Test.php') or
+            file_path.endswith('Spec.php')
+        )
+    
+    def _is_validation_file(self, file_path: str) -> bool:
+        """Verifica se é um arquivo de validação"""
+        return (
+            'validator' in file_path.lower() or
+            'validation' in file_path.lower() or
+            'rule' in file_path.lower() or
+            'validate' in file_path.lower()
+        )
+    
+    def _map_php_type_to_sql(self, php_type: str, size: Optional[int]) -> tuple:
+        """Mapeia tipos PHP para tipos SQL"""
+        php_type_lower = php_type.lower()
+        
+        if php_type_lower in ['string', 'varchar']:
+            return 'VARCHAR', size
+        elif php_type_lower in ['char']:
+            return 'CHAR', size
+        elif php_type_lower in ['text', 'longtext']:
+            return 'TEXT', None
+        elif php_type_lower in ['integer', 'int', 'bigint']:
+            return 'INTEGER', None
+        elif php_type_lower in ['decimal', 'float', 'double']:
+            return 'DECIMAL', None
+        else:
+            return 'UNKNOWN', None
+    
+    def _detect_framework(self) -> str:
+        """Detecta o framework PHP usado"""
+        composer_path = Path(self.project_path) / 'composer.json'
+        if composer_path.exists():
+            try:
+                with open(composer_path, 'r') as f:
+                    composer_data = json.load(f)
+                
+                require = composer_data.get('require', {})
+                require_dev = composer_data.get('require-dev', {})
+                
+                if 'laravel/framework' in require:
+                    return 'laravel'
+                elif 'symfony/symfony' in require or 'symfony/framework-bundle' in require:
+                    return 'symfony'
+                elif 'hyperf/hyperf' in require:
+                    return 'hyperf'
+                elif 'robmorgan/phinx' in require:
+                    return 'phinx'
+            except:
+                pass
+        
+        return 'php_generic'
