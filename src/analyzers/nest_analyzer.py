@@ -203,9 +203,12 @@ class NestAnalyzer(BaseAnalyzer):
                         field_name=dto_name,
                         field_type='NESTJS_DTO',
                         field_size=None,
+                        context=f"DTO NestJS: {dto_name}",
+                        project_type='nest_bff',
                         impact_level=ImpactLevel.MEDIUM,
                         status=Status.NEEDS_ANALYSIS,
-                        context=f"DTO NestJS: {dto_name}"
+                        action_needed='Revisar validação de CNPJ',
+                        estimated_effort='2-4 horas'
                     ))
         
         # Buscar propriedades com CNPJ em DTOs
@@ -227,9 +230,12 @@ class NestAnalyzer(BaseAnalyzer):
                         field_name=property_name,
                         field_type='NESTJS_PROPERTY',
                         field_size=None,
+                        context=f"Propriedade NestJS: {property_name}",
+                        project_type='nest_bff',
                         impact_level=ImpactLevel.MEDIUM,
                         status=Status.NEEDS_ANALYSIS,
-                        context=f"Propriedade NestJS: {property_name}"
+                        action_needed='Revisar validação de CNPJ',
+                        estimated_effort='2-4 horas'
                     ))
         
         return fields

@@ -311,9 +311,12 @@ class ETLAnalyzer(BaseAnalyzer):
                     field_name=field_name,
                     field_type='PENTAHO_FIELD',
                     field_size=None,
+                    context=f"Campo Pentaho: {field_name}",
+                    project_type='etl_pentaho',
                     impact_level=ImpactLevel.MEDIUM,
                     status=Status.NEEDS_ANALYSIS,
-                    context=f"Campo Pentaho: {field_name}"
+                    action_needed='Revisar validação de CNPJ',
+                    estimated_effort='2-4 horas'
                 ))
         
         return fields
@@ -343,9 +346,12 @@ class ETLAnalyzer(BaseAnalyzer):
                             field_name=column_name,
                             field_type='SQL_COLUMN',
                             field_size=None,
+                            context=f"Coluna SQL: {column_name}",
+                            project_type='etl_sql',
                             impact_level=ImpactLevel.MEDIUM,
                             status=Status.NEEDS_ANALYSIS,
-                            context=f"Coluna SQL: {column_name}"
+                            action_needed='Revisar validação de CNPJ',
+                            estimated_effort='2-4 horas'
                         ))
         
         # Buscar tabelas com CNPJ
@@ -367,9 +373,12 @@ class ETLAnalyzer(BaseAnalyzer):
                         field_name=table_name,
                         field_type='SQL_TABLE',
                         field_size=None,
+                        context=f"Tabela SQL: {table_name}",
+                        project_type='etl_sql',
                         impact_level=ImpactLevel.MEDIUM,
                         status=Status.NEEDS_ANALYSIS,
-                        context=f"Tabela SQL: {table_name}"
+                        action_needed='Revisar validação de CNPJ',
+                        estimated_effort='2-4 horas'
                     ))
         
         return fields
@@ -395,9 +404,12 @@ class ETLAnalyzer(BaseAnalyzer):
                     field_name=column_name,
                     field_type='PYTHON_PANDAS_COLUMN',
                     field_size=None,
+                    context=f"Coluna Pandas: {column_name}",
+                    project_type='etl_python_pandas',
                     impact_level=ImpactLevel.MEDIUM,
                     status=Status.NEEDS_ANALYSIS,
-                    context=f"Coluna Pandas: {column_name}"
+                    action_needed='Revisar validação de CNPJ',
+                    estimated_effort='2-4 horas'
                 ))
         
         # Buscar variáveis com CNPJ
@@ -418,9 +430,12 @@ class ETLAnalyzer(BaseAnalyzer):
                         field_name=variable_name,
                         field_type='PYTHON_VARIABLE',
                         field_size=None,
+                        context=f"Variável Python: {variable_name}",
+                        project_type='etl_python_pandas',
                         impact_level=ImpactLevel.MEDIUM,
                         status=Status.NEEDS_ANALYSIS,
-                        context=f"Variável Python: {variable_name}"
+                        action_needed='Revisar validação de CNPJ',
+                        estimated_effort='2-4 horas'
                     ))
         
         return fields
