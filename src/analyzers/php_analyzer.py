@@ -1,249 +1,22 @@
 """
-Analisador PHP - Laravel, Symfony, Hyperf
-Versão: 1.0
-Data: 2025-01-27
+Analisador Principal PHP
+Versão: 2.0
+Data: 2025-08-28
 """
 
 import re
 import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
 
 from .base_analyzer import BaseAnalyzer, CNPJField, ImpactLevel, Status
-
-
-@dataclass
-class PHPFieldDefinition:
-    """Representa uma definição de campo PHP encontrada"""
-    file_path: str
-    line_number: int
-    field_name: str
-    field_type: str
-    field_size: Optional[int]
-    context: str
-    category: str  # 'migration', 'model', 'validation', 'test'
-
-
-class PHPMigrationAnalyzer:
-    """Analisador específico para migrations PHP (Phinx, Laravel, Hyperf)"""
-    
-    def __init__(self):
-        self.migration_patterns = {
-            'phinx': {
-                'field_definition': r'\$table->addColumn\s*\(\s*[\'"]([^\'"]+)[\'"]\s*,\s*[\'"]([^\'"]+)[\'"]([^)]*)\)',
-                'laravel_field': r'\$table->(\w+)\s*\(\s*[\'"]([^\'"]+)[\'"]([^)]*)\)',
-                'index_reference': r'[\'"]([^\'"]+)[\'"]\s*[,\]]',  # Para detectar referências em índices
-            }
-        }
-    
-    def analyze_migration_file(self, file_path: str, content: str) -> List[PHPFieldDefinition]:
-        """Analisa um arquivo de migration e retorna apenas definições de campos"""
-        fields = []
-        lines = content.split('\n')
-        
-        for line_num, line in enumerate(lines, 1):
-            # Pular linhas que são apenas referências em índices
-            if self._is_index_reference(line):
-                continue
-                
-            # Buscar definições de campos Phinx
-            phinx_match = re.search(self.migration_patterns['phinx']['field_definition'], line)
-            if phinx_match:
-                field_name = phinx_match.group(1)
-                field_type = phinx_match.group(2)
-                options = phinx_match.group(3)
-                
-                if self._is_cnpj_field(field_name):
-                    field_size = self._extract_field_size(options)
-                    fields.append(PHPFieldDefinition(
-                        file_path=file_path,
-                        line_number=line_num,
-                        field_name=field_name,
-                        field_type=field_type,
-                        field_size=field_size,
-                        context=line.strip(),
-                        category='migration'
-                    ))
-                continue
-            
-            # Buscar definições de campos Laravel
-            laravel_match = re.search(self.migration_patterns['phinx']['laravel_field'], line)
-            if laravel_match:
-                method = laravel_match.group(1)
-                field_name = laravel_match.group(2)
-                options = laravel_match.group(3)
-                
-                if self._is_cnpj_field(field_name):
-                    field_size = self._extract_field_size(options)
-                    fields.append(PHPFieldDefinition(
-                        file_path=file_path,
-                        line_number=line_num,
-                        field_name=field_name,
-                        field_type=method,
-                        field_size=field_size,
-                        context=line.strip(),
-                        category='migration'
-                    ))
-        
-        return fields
-    
-    def _is_index_reference(self, line: str) -> bool:
-        """Verifica se a linha é apenas uma referência em índice"""
-        # Padrões que indicam referência em índice
-        index_patterns = [
-            r'addIndex\s*\(',
-            r'addUnique\s*\(',
-            r'addForeignKey\s*\(',
-            r'index\s*\(',
-            r'unique\s*\(',
-        ]
-        
-        for pattern in index_patterns:
-            if re.search(pattern, line):
-                return True
-        return False
-    
-    def _is_cnpj_field(self, field_name: str) -> bool:
-        """Verifica se o campo é relacionado a CNPJ"""
-        cnpj_patterns = [
-            r'cnpj',
-            r'cpf_cnpj',
-            r'cpfcnpj',
-            r'cpfCnpj',
-            r'cpfcnpj',
-            r'cnpj_cpf',
-            r'cnpjcpf',
-        ]
-        
-        field_lower = field_name.lower()
-        return any(re.search(pattern, field_lower) for pattern in cnpj_patterns)
-    
-    def _extract_field_size(self, options: str) -> Optional[int]:
-        """Extrai o tamanho do campo das opções"""
-        # Buscar 'length' => X
-        length_match = re.search(r"'length'\s*=>\s*(\d+)", options)
-        if length_match:
-            return int(length_match.group(1))
-        
-        # Buscar length como segundo parâmetro (Laravel)
-        length_match = re.search(r',\s*(\d+)', options)
-        if length_match:
-            return int(length_match.group(1))
-        
-        return None
-
-
-class PHPCodeAnalyzer:
-    """Analisador para código PHP (models, services, etc.)"""
-    
-    def __init__(self):
-        self.code_patterns = {
-            'property': r'(?:public|private|protected)\s+\$(\w+)',
-            'variable': r'\$(\w+)\s*=',
-            'parameter': r'function\s+\w+\s*\([^)]*\$(\w+)[^)]*\)',
-        }
-    
-    def analyze_code_file(self, file_path: str, content: str) -> List[PHPFieldDefinition]:
-        """Analisa um arquivo de código PHP"""
-        fields = []
-        lines = content.split('\n')
-        
-        for line_num, line in enumerate(lines, 1):
-            # Buscar propriedades de classe
-            prop_match = re.search(self.code_patterns['property'], line)
-            if prop_match:
-                field_name = prop_match.group(1)
-                if self._is_cnpj_field(field_name):
-                    fields.append(PHPFieldDefinition(
-                        file_path=file_path,
-                        line_number=line_num,
-                        field_name=field_name,
-                        field_type='PROPERTY',
-                        field_size=None,
-                        context=line.strip(),
-                        category='code'
-                    ))
-                continue
-            
-            # Buscar variáveis
-            var_match = re.search(self.code_patterns['variable'], line)
-            if var_match:
-                field_name = var_match.group(1)
-                if self._is_cnpj_field(field_name):
-                    fields.append(PHPFieldDefinition(
-                        file_path=file_path,
-                        line_number=line_num,
-                        field_name=field_name,
-                        field_type='VARIABLE',
-                        field_size=None,
-                        context=line.strip(),
-                        category='code'
-                    ))
-        
-        return fields
-    
-    def _is_cnpj_field(self, field_name: str) -> bool:
-        """Verifica se o campo é relacionado a CNPJ"""
-        cnpj_patterns = [
-            r'cnpj',
-            r'cpf_cnpj',
-            r'cpfcnpj',
-            r'cpfCnpj',
-            r'cpfcnpj',
-            r'cnpj_cpf',
-            r'cnpjcpf',
-        ]
-        
-        field_lower = field_name.lower()
-        return any(re.search(pattern, field_lower) for pattern in cnpj_patterns)
-
-
-class PHPValidationAnalyzer:
-    """Analisador para validações PHP"""
-    
-    def __init__(self):
-        self.validation_patterns = {
-            'rule': r'[\'"]([^\'"]*cnpj[^\'"]*)[\'"]',
-            'validator': r'CNPJ|Cnpj',
-            'validation_method': r'validateCnpj|validate_cnpj',
-        }
-    
-    def analyze_validation_file(self, file_path: str, content: str) -> List[PHPFieldDefinition]:
-        """Analisa um arquivo de validação PHP"""
-        fields = []
-        lines = content.split('\n')
-        
-        for line_num, line in enumerate(lines, 1):
-            # Buscar regras de validação
-            rule_match = re.search(self.validation_patterns['rule'], line, re.IGNORECASE)
-            if rule_match:
-                rule = rule_match.group(1)
-                fields.append(PHPFieldDefinition(
-                    file_path=file_path,
-                    line_number=line_num,
-                    field_name=f"validation_rule_{line_num}",
-                    field_type='VALIDATION_RULE',
-                    field_size=None,
-                    context=line.strip(),
-                    category='validation'
-                ))
-                continue
-            
-            # Buscar validadores
-            validator_match = re.search(self.validation_patterns['validator'], line)
-            if validator_match:
-                fields.append(PHPFieldDefinition(
-                    file_path=file_path,
-                    line_number=line_num,
-                    field_name=f"validator_{line_num}",
-                    field_type='VALIDATOR',
-                    field_size=None,
-                    context=line.strip(),
-                    category='validation'
-                ))
-        
-        return fields
+from .php import (
+    PHPMigrationAnalyzer,
+    PHPCodeAnalyzer,
+    PHPValidationAnalyzer,
+    PHPTestAnalyzer,
+    PHPFieldDefinition
+)
 
 
 class PHPAnalyzer(BaseAnalyzer):
@@ -252,9 +25,12 @@ class PHPAnalyzer(BaseAnalyzer):
     def __init__(self, project_path: Path):
         super().__init__('php')
         self.project_path = project_path
+        
+        # Inicializar analisadores especializados
         self.migration_analyzer = PHPMigrationAnalyzer()
         self.code_analyzer = PHPCodeAnalyzer()
         self.validation_analyzer = PHPValidationAnalyzer()
+        self.test_analyzer = PHPTestAnalyzer()
     
     def get_file_extensions(self) -> List[str]:
         """Retorna as extensões de arquivo suportadas"""
@@ -294,7 +70,7 @@ class PHPAnalyzer(BaseAnalyzer):
             else:
                 code_files.append((file_path, content))
         
-        # Analisar cada categoria
+        # Analisar cada categoria usando analisadores especializados
         migration_fields = self._analyze_migrations(migration_files)
         code_fields = self._analyze_code(code_files)
         validation_fields = self._analyze_validations(validation_files)
@@ -400,32 +176,31 @@ class PHPAnalyzer(BaseAnalyzer):
         }
     
     def _analyze_migrations(self, migration_files: List[tuple]) -> List[PHPFieldDefinition]:
-        """Analisa arquivos de migration"""
+        """Analisa arquivos de migration usando o analisador especializado"""
         fields = []
         for file_path, content in migration_files:
             fields.extend(self.migration_analyzer.analyze_migration_file(file_path, content))
         return fields
     
     def _analyze_code(self, code_files: List[tuple]) -> List[PHPFieldDefinition]:
-        """Analisa arquivos de código"""
+        """Analisa arquivos de código usando o analisador especializado"""
         fields = []
         for file_path, content in code_files:
             fields.extend(self.code_analyzer.analyze_code_file(file_path, content))
         return fields
     
     def _analyze_validations(self, validation_files: List[tuple]) -> List[PHPFieldDefinition]:
-        """Analisa arquivos de validação"""
+        """Analisa arquivos de validação usando o analisador especializado"""
         fields = []
         for file_path, content in validation_files:
             fields.extend(self.validation_analyzer.analyze_validation_file(file_path, content))
         return fields
     
     def _analyze_tests(self, test_files: List[tuple]) -> List[PHPFieldDefinition]:
-        """Analisa arquivos de teste"""
-        # Por enquanto, usar o mesmo analisador de código para testes
+        """Analisa arquivos de teste usando o analisador especializado"""
         fields = []
         for file_path, content in test_files:
-            fields.extend(self.code_analyzer.analyze_code_file(file_path, content))
+            fields.extend(self.test_analyzer.analyze_test_file(file_path, content))
         return fields
     
     def _is_migration_file(self, file_path: str) -> bool:
@@ -472,6 +247,41 @@ class PHPAnalyzer(BaseAnalyzer):
             return 'DECIMAL', None
         else:
             return 'UNKNOWN', None
+    
+    def _assess_impact(self, field_type: str, field_size: Optional[int]) -> tuple:
+        """Avalia o impacto de um campo baseado no tipo e tamanho"""
+        if field_type == 'UNKNOWN':
+            return ImpactLevel.MEDIUM, Status.NEEDS_ANALYSIS, 'Análise manual necessária'
+        
+        if field_type in ['VARCHAR', 'CHAR']:
+            if field_size is None:
+                return ImpactLevel.MEDIUM, Status.NEEDS_ANALYSIS, 'Verificar tamanho do campo'
+            elif field_size < 14:
+                return ImpactLevel.CRITICAL, Status.INCOMPATIBLE, f'CRÍTICO: Tamanho {field_size} < 14. Alterar para VARCHAR(18)'
+            elif field_size < 18:
+                return ImpactLevel.MEDIUM, Status.ATTENTION, f'Aumentar tamanho de {field_size} para 18'
+            else:
+                return ImpactLevel.LOW, Status.COMPATIBLE, 'Nenhuma alteração necessária'
+        
+        elif field_type in ['TEXT']:
+            return ImpactLevel.LOW, Status.COMPATIBLE, 'Campo TEXT é compatível'
+        
+        elif field_type in ['INTEGER', 'BIGINT']:
+            return ImpactLevel.HIGH, Status.INCOMPATIBLE, 'Campo numérico precisa ser alterado para VARCHAR(18)'
+        
+        else:
+            return ImpactLevel.MEDIUM, Status.NEEDS_ANALYSIS, 'Verificar compatibilidade do tipo'
+    
+    def _estimate_effort(self, impact_level: ImpactLevel) -> str:
+        """Estima o esforço baseado no nível de impacto"""
+        if impact_level == ImpactLevel.CRITICAL:
+            return '8-16 horas'
+        elif impact_level == ImpactLevel.HIGH:
+            return '4-8 horas'
+        elif impact_level == ImpactLevel.MEDIUM:
+            return '2-4 horas'
+        else:
+            return '1-2 horas'
     
     def _detect_framework(self) -> str:
         """Detecta o framework PHP usado"""
