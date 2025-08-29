@@ -416,7 +416,7 @@ class NestAnalyzer(BaseAnalyzer):
             else:
                 overall_impact = ImpactLevel.LOW
         else:
-            overall_impact = ImpactLevel.NONE
+            overall_impact = ImpactLevel.LOW  # Sem campos = baixo impacto
         
         return {
             'project_name': project_path.name,

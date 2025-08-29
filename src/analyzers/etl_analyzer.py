@@ -625,7 +625,7 @@ class ETLAnalyzer(BaseAnalyzer):
             else:
                 overall_impact = ImpactLevel.LOW
         else:
-            overall_impact = ImpactLevel.NONE
+            overall_impact = ImpactLevel.LOW  # Sem campos = baixo impacto
         
         return {
             'project_name': project_path.name,
@@ -634,7 +634,7 @@ class ETLAnalyzer(BaseAnalyzer):
             'cnpj_fields_found': all_fields,
             'validations_found': [],
             'frontend_masks': [],
-            'overall_impact': overall_impact,
+            'overall_impact': overall_impact.value if overall_impact else 'baixo',
             'files_scanned': len(scanned_files),
             'framework_detected': 'etl',
             'etl_type': etl_type,
