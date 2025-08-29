@@ -1,0 +1,2 @@
+app/Model/Indicacao.php: * @property string $email 
+app/Model/Usuario.php: * @property string $email 

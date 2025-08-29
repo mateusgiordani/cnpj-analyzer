@@ -1,0 +1,3 @@
+migrations/2024_01_09_160507_create_usuario_table.php:            $table->string('email');
+migrations/2024_01_09_160507_create_usuario_table.php:            $table->unique(['email', 'username']);
+migrations/2024_01_09_160505_create_inidicacao_table.php:            $table->string('email');

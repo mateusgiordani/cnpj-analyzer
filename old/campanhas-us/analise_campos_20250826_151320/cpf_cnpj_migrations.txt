@@ -1,0 +1,11 @@
+migrations/2024_11_13_160505_create_cooperado_table.php:            $table->string('cpf_cnpj', 14);
+migrations/2024_11_13_160505_create_cooperado_table.php:            $table->primary(['cd_coop', 'cpf_cnpj']);
+migrations/2024_06_26_145320_log_mgm_indicacao.php:            $table->string('cpf_cnpj_indicador', 14);
+migrations/2024_06_26_145320_log_mgm_indicacao.php:            $table->string('cpf_cnpj_indicado', 14);
+migrations/2024_03_08_183632_lancamento_controle.php:            $table->string('cpf_cnpj', 14);
+migrations/2023_10_30_103632_lancamento.php:            $table->string('cpf_cnpj', 14);
+migrations/2023_12_28_175512_create_lancamento_campanha.php:            $table->string('cpf_cnpj', 14);
+migrations/2023_12_28_175512_create_lancamento_campanha.php:                ['cpf_cnpj', 'cd_coop', 'campanha_id', 'fato_gerador_id', 'dt_base_lancamento'],
+migrations/2024_01_09_160505_create_inidicacao_table.php:            $table->string('cpf_cnpj');
+migrations/2023_10_25_172237_participante.php:            $table->string('cpf_cnpj', 14);
+migrations/2023_10_25_172237_participante.php:            $table->unique(['cd_coop', 'cpf_cnpj']);

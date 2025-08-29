@@ -1,0 +1,9 @@
+migrations/2023_10_27_110737_fato_gerador.php:            $table->string('nome', 60);
+migrations/2024_03_14_131020_fato_gerador_exportacao.php:            $table->string('exportacao_nome', 255);
+migrations/2024_03_14_131020_fato_gerador_exportacao.php:            $table->dropColumn('exportacao_nome');
+migrations/2023_10_25_172205_campanha.php:            $table->string('nome', 45)->nullable();
+migrations/2024_11_25_110625_ganhadores_add_nome.php:class GanhadoresAddNome extends Migration
+migrations/2023_10_25_172204_tipo_campanha.php:            $table->string('nome', 45);
+migrations/2024_01_09_160507_create_usuario_table.php:            $table->string('username');
+migrations/2024_01_09_160507_create_usuario_table.php:            $table->unique(['email', 'username']);
+migrations/2024_01_09_160505_create_inidicacao_table.php:            $table->string('nome');

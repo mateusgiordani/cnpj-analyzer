@@ -1,0 +1,59 @@
+test/Unit/Infra/Service/Unicred/ContaCorrente/GetTitularesContaCorrenteServiceTest.php:        $r1->cpfCnpj = '52145632589';
+test/Unit/Infra/Service/Unicred/ContaCorrente/GetTitularesContaCorrenteServiceTest.php:        $r2->cpfCnpj = '85478569852';
+test/Unit/Infra/Service/Unicred/ContaCorrente/DTO/ContaTitularDTOTest.php:        $this->assertSame($contaTitular->cpfCnpj, '123456');
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoLoteUseCaseTest.php:        string $cpfCnpj = '12345678909',
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoLoteUseCaseTest.php:            'cpfCnpj' => $cpfCnpj,
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoUseCaseTest.php:        $lancamento3 =  $this->criaLancamento(200, cpfCnpj: '71426798000186');
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoUseCaseTest.php:            $this->criaLancamento(100, dtLancamento: '2024-01-10', cpfCnpj: '71426798000186')
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoUseCaseTest.php:            $this->criaLancamento(150, dtLancamento: '2024-01-10', cpfCnpj: '71426798000186')
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoUseCaseTest.php:            $this->criaLancamento(200, dtLancamento: '2024-02-01', cpfCnpj: '71426798000186')
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoUseCaseTest.php:        string $cpfCnpj = '12345678909',
+test/Unit/Domain/MotorCupom/V1/ProcessarLancamentoUseCaseTest.php:            'cpfCnpj' => $cpfCnpj,
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertEquals($arrData['cpfCnpj'], $indicacaoInput->cpfCnpj);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $arrData['cpfCnpj'] = '94386836000110';
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertSame($arrData['cpfCnpj'], $indicacao->cpf_cnpj);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:            'cpfCnpj' => '12345678909',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:            'cpfCnpj' => '12345678909',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:            'cpfCnpj' => '12345678909',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:            'cpfCnpj' => '12345678909',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:        $this->assertSame($arrData['cpfCnpj'], $lancamento->cpfCnpj);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:                    'cpfCnpj' => '12345678909',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:                    'cpfCnpj' => '12345678909',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:            'invalid cpfCnpj' => [
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:                    'cpfCnpj' => '123456789095',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/LancamentoInputTest.php:                'CpfCnpj',
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:        $createLeadInputDTO->setCpfCnpj($indicacaoInput->cpfCnpj);
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:                        'cpfCnpj' => '12345678909',
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:                        'cpfCnpj' => '12345678909',
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $getInfoMatriculaUseCase->method('execute')->willReturnCallback(function ($cdCoop, $cpfCnpj) {
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:            return match ([$cdCoop, $cpfCnpj]) {
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $indicacaoSalva = $this->indicacaoRepository->getIndicacao(8, $indicacaoInput->cpfCnpj);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $this->assertSame($indicacaoInput->cpfCnpj, $indicacaoSalva->cpfCnpj);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $indicacaoSalva = $this->indicacaoRepository->getIndicacao(8, $indicacaoInput->cpfCnpj);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $this->assertSame($indicacaoInput->cpfCnpj, $indicacaoSalva->cpfCnpj);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $getInfoMatriculaUseCase->method('execute')->willReturnCallback(function ($cdCoop, $cpfCnpj) {
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:            return match ([$cdCoop, $cpfCnpj]) {
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $getInfoMatriculaUseCase->method('execute')->willReturnCallback(function ($cdCoop, $cpfCnpj) {
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:            return match ([$cdCoop, $cpfCnpj]) {
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:            'cpfCnpj' => '12345678909',
+test/Unit/Domain/Campanha/V1/GetSorteioByCampanhaIdUseCaseTest.php:            'cpf_cnpj' => 67790553011,
+test/Unit/Domain/Campanha/V1/GetSorteioByCampanhaIdUseCaseTest.php:        $cooperado1->cpf_cnpj = 90201520000155;
+test/Unit/Domain/Campanha/V1/GetSorteioByCampanhaIdUseCaseTest.php:        $cooperado2->cpf_cnpj = 67790553011;
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:use Unicred\CrmCampanhasUs\Domain\Participante\V1\ShowCuponsCampanhaByCpfCnpjUseCase;
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:class ShowCuponsCampanhaByCpfCnpjUseCaseTest extends CampanhasTestCase
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:        $cpfCnpj = '95847006004';
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:        $participanteRepository->addParticipante('1', $cdCoop, $cpfCnpj);
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:        $cuponsUseCase = new ShowCuponsCampanhaByCpfCnpjUseCase($participanteRepository);
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:        $paginatedCupons = $cuponsUseCase->execute($cdCoop, $cpfCnpj,  $campanhaId, new Pagination(1, 2));
+test/Unit/Domain/Participante/V1/ShowCuponsCampanhaByCpfCnpjUseCaseTest.php:        $paginatedCupons = $cuponsUseCase->execute($cdCoop, $cpfCnpj, $campanhaId, new Pagination(2, 2));
+test/Unit/Domain/Participante/V1/InputOutputData/ContaTitularesOutputTest.php:        $this->assertSame('258965214587', $contaTitularesOutput->cpfCnpj);
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $getInfoMatriculaUseCase->method('execute')->willReturnCallback(function ($cdCoop, $cpfCnpj) {
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:            return match ([$cdCoop, $cpfCnpj]) {
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $indicacaoSalva = $this->indicacaoRepository->getIndicacao(8, $indicacaoInput->cpfCnpj);
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $this->assertSame($indicacaoInput->cpfCnpj, $indicacaoSalva->cpfCnpj);
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $getInfoMatriculaUseCase->method('execute')->willReturnCallback(function ($cdCoop, $cpfCnpj) {
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:            return match ([$cdCoop, $cpfCnpj]) {
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $getInfoMatriculaUseCase->method('execute')->willReturnCallback(function ($cdCoop, $cpfCnpj) {
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:            return match ([$cdCoop, $cpfCnpj]) {
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        //$existingIndication = $this->indicacaoRepository->createIndicacao(8, $indicacaoInput->cpfCnpj, $indicacaoInput);
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:            'cpfCnpj' => '12345678909',

@@ -1,0 +1,10 @@
+app/Model/LancamentoCampanha.php: * @property string $cpfCnpj
+app/Model/LancamentoCampanha.php:        'cpf_cnpj',
+app/Model/Lancamento.php: * @property string $cpfCnpj
+app/Model/Lancamento.php:        'cpf_cnpj' => 'string',
+app/Model/Lancamento.php:            'cpfCnpj' => $this->cpfCnpj,
+app/Model/Participante.php: * @property string $cpfCnpj 
+app/Model/Participante.php:        'cpf_cnpj' => 'string',
+app/Model/LancamentoAcumuladoControle.php: * @property string $cpfCnpj
+app/Model/Indicacao.php: * @property string $cpfCnpj 
+app/Model/Cooperado.php: * @property string $cpfCnpj 

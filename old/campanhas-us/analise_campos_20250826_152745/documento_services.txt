@@ -1,0 +1,20 @@
+app/Infra/Service/Unicred/PessoaUs/PessoaJuridicaService.php:    public function execute(int $cooperativa, string $cpf): PessoaDTO
+app/Infra/Service/Unicred/PessoaUs/PessoaJuridicaService.php:        $url = str_replace('{cnpj}', $cpf, $urlEndpoint);
+app/Infra/Service/Unicred/PessoaUs/PessoaJuridicaService.php:            $response->content->cpfCnpj,
+app/Infra/Service/Unicred/PessoaUs/PessoaFisicaService.php:    public function execute(int $cooperativa, string $cpf): PessoaDTO
+app/Infra/Service/Unicred/PessoaUs/PessoaFisicaService.php:        $url = str_replace('{cpf}', $cpf, $urlEndpoint);
+app/Infra/Service/Unicred/PessoaUs/PessoaFisicaService.php:            $response->content->cpfCnpj,
+app/Infra/Service/Unicred/PessoaUs/AssociadoService.php:    public function execute(int $cooperativa, string $cpfCnpj): AssociadoDTO
+app/Infra/Service/Unicred/PessoaUs/AssociadoService.php:        $url = str_replace('{cpfCnpj}', $cpfCnpj, $urlEndpoint);
+app/Infra/Service/Unicred/PessoaUs/GetAssociadoContaService.php:                $response->content->cooperado->cpfCnpj,
+app/Infra/Service/Unicred/PessoaUs/DTO/AssociadoContaCooperadoDTO.php:        public string $cpfCnpj,
+app/Infra/Service/Unicred/PessoaUs/DTO/PessoaDTO.php:        public string $cpfCnpj,
+app/Infra/Service/Unicred/CrmUs/CreateLead.php:        if ($createLeadInputDTO->getCpfCnpj()) {
+app/Infra/Service/Unicred/CrmUs/CreateLead.php:            $jsonBody['cpfCnpj'] = $createLeadInputDTO->getCpfCnpj();
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:    private string $cpfCnpj = '';
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:    public function getCpfCnpj(): string
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:        return $this->cpfCnpj;
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:    public function setCpfCnpj(string $cpfCnpj): void
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:        $this->cpfCnpj = $cpfCnpj;
+app/Infra/Service/Unicred/ContaCorrente/GetTitularesContaCorrenteService.php:                $item->cpfCnpj,
+app/Infra/Service/Unicred/ContaCorrente/DTO/ContaTitularDTO.php:        public string $cpfCnpj,

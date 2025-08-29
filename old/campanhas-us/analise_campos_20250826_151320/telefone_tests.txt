@@ -1,0 +1,13 @@
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertEquals($arrData['telefone'], $indicacaoInput->telefone);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertSame($arrData['telefone'], $indicacao->telefone);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:            'telefone' => [
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:                    'telefone' => '12',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:            'telefone' => '55123456789',
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:        $createLeadInputDTO->setPhone($indicacaoInput->telefone);
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:                        'telefone' => '5511223344',
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:                        'telefone' => '5511223344',
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $this->assertSame($indicacaoInput->telefone, $indicacaoSalva->telefone);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $this->assertSame($indicacaoInput->telefone, $indicacaoSalva->telefone);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:            'telefone' => '5511588479',
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $this->assertSame($indicacaoInput->telefone, $indicacaoSalva->telefone);
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:            'telefone' => '5511588479',

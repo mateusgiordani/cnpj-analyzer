@@ -1,0 +1,5 @@
+migrations/2024_06_23_115520_indicacao_leadIdCrm_nullable.php:        Db::statement('ALTER TABLE `indicacao` MODIFY `lead_id_crm` VARCHAR(120) NULL');
+migrations/2024_06_23_115520_indicacao_leadIdCrm_nullable.php:        Db::statement('ALTER TABLE `indicacao` MODIFY `lead_id_crm` VARCHAR(120) NOT NULL');
+migrations/2024_04_25_131020_indicacao_participanteId_notNull.php:        Db::statement('ALTER TABLE `indicacao` MODIFY `indicador_id` VARCHAR(120) NULL');
+migrations/2024_04_25_131020_indicacao_participanteId_notNull.php:        Db::statement('ALTER TABLE `indicacao` MODIFY `indicador_id` VARCHAR(120) NOT NULL');
+migrations/2024_11_25_110625_ganhadores_add_nome.php:        Db::statement('ALTER TABLE `ganhadores` ADD `nm_ganhador` VARCHAR(255)');

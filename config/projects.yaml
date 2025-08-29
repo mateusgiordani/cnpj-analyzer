@@ -1,0 +1,97 @@
+# Configuração de Projetos para Análise CNPJ Alfanumérico
+# Versão: 1.0
+# Data: 2025-01-27
+
+# Configurações globais
+global:
+  output_directory: "reports"
+  log_level: "INFO"
+  parallel_analysis: true
+  max_workers: 4
+
+# Projetos para análise
+projects:
+  # Exemplo de projeto PHP Laravel
+  - name: "projeto-laravel"
+    path: "./projetos/laravel-app"
+    type: "php_laravel"
+    priority: "high"
+    description: "Aplicação Laravel principal"
+    enabled: true
+    
+  # Exemplo de projeto Node.js NestJS
+  - name: "projeto-nest"
+    path: "./projetos/nest-api"
+    type: "node_nest"
+    priority: "high"
+    description: "API BFF com NestJS"
+    enabled: true
+    
+  # Exemplo de projeto React
+  - name: "projeto-react"
+    path: "./projetos/react-app"
+    type: "react"
+    priority: "medium"
+    description: "Frontend React"
+    enabled: true
+    
+  # Exemplo de projeto Vue
+  - name: "projeto-vue"
+    path: "./projetos/vue-app"
+    type: "vue"
+    priority: "medium"
+    description: "Frontend Vue"
+    enabled: true
+    
+  # Exemplo de projeto Python Django
+  - name: "projeto-django"
+    path: "./projetos/django-app"
+    type: "python_django"
+    priority: "low"
+    description: "Aplicação Django"
+    enabled: false
+
+# Padrões de busca personalizados
+search_patterns:
+  cnpj_fields:
+    - "cnpj"
+    - "cpf_cnpj"
+    - "nr_documento"
+    - "documento"
+    - "numero_documento"
+    - "cnpj_cpf"
+    - "documento_fiscal"
+    
+  validations:
+    - "cnpj.*validat"
+    - "validat.*cnpj"
+    - "cpf.*cnpj.*validat"
+    - "documento.*validat"
+    
+  masks:
+    - "cnpj.*mask"
+    - "mask.*cnpj"
+    - "format.*cnpj"
+    - "cnpj.*format"
+
+# Configurações de relatório
+report:
+  template: "default"
+  format: ["markdown", "json"]
+  include_code_snippets: true
+  include_recommendations: true
+  include_effort_estimation: true
+
+# Configurações de exportação
+export:
+  formats: ["json", "csv", "xlsx"]
+  include_details: true
+  group_by_project: true
+  group_by_impact: true
+
+# Configurações de monitoramento
+monitoring:
+  enabled: false
+  interval_minutes: 60
+  notify_on_changes: true
+  backup_reports: true

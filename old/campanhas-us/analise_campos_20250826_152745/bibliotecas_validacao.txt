@@ -1,0 +1,7 @@
+app/Infra/Validator/ValidatorFactory.php:use Tigo\DocumentBr\Cnpj;
+app/Infra/Validator/ValidatorFactory.php:use Tigo\DocumentBr\Cpf;
+app/Infra/Validator/ValidatorFactory.php:            'cpfCnpj' => [
+app/Infra/Validator/ValidatorFactory.php:                    $cpf = new Cpf();
+app/Infra/Validator/ValidatorFactory.php:                    $cnpj = new Cnpj();
+app/Infra/Validator/ValidatorFactory.php:                    return $cpf->check($value) || $cnpj->check($value);
+app/Infra/Validator/ValidatorFactory.php:                'Deve ser um CPF ou CNPJ válido',

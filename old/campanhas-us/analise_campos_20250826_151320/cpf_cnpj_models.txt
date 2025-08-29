@@ -1,0 +1,3 @@
+app/Model/LancamentoCampanha.php:        'cpf_cnpj',
+app/Model/Lancamento.php:        'cpf_cnpj' => 'string',
+app/Model/Participante.php:        'cpf_cnpj' => 'string',

@@ -1,0 +1,4 @@
+app/Infra/Validator/ValidatorFactory.php:            'phone' => [
+app/Infra/Validator/ValidatorFactory.php:                    $isValidPhone = ! in_array($number, $fakeNumbers);
+app/Infra/Validator/ValidatorFactory.php:                    return $matches && $isValidPhone;
+app/Infra/Validator/ValidatorFactory.php:                'Telefone inválido',

@@ -1,0 +1,28 @@
+app/Infra/Validator/Validator.php:namespace Unicred\CrmCampanhasUs\Infra\Validator;
+app/Infra/Validator/Validator.php:use Valitron\Validator as BaseValidator;
+app/Infra/Validator/Validator.php:class Validator extends BaseValidator
+app/Infra/Validator/Validator.php:     * funcao core do validator que
+app/Infra/Validator/Validator.php:    protected function validationMustBeExcecuted($validation, $field, $values, $multiple)
+app/Infra/Validator/Validator.php:        if (in_array($validation['rule'], array('requiredWith', 'requiredWithout'))) {
+app/Infra/Validator/Validator.php:    protected function validateAlter()
+app/Infra/Validator/Validator.php:        foreach ($this->_validations as $v) {
+app/Infra/Validator/Validator.php:                if (!$this->validationMustBeExcecuted($v, $field, $values, $multiple)) {
+app/Infra/Validator/Validator.php:                    $callback = array($this, 'validate' . ucfirst($v['rule']));
+app/Infra/Validator/Validator.php:    public function validate(bool $throwException = false): bool
+app/Infra/Validator/Validator.php:        $result = $this->validateAlter();
+app/Infra/Validator/Validator.php:    protected function validateDate($field, $value)
+app/Infra/Validator/Validator.php:    protected function validateMin($field, $value, $params): bool
+app/Infra/Validator/Validator.php:    protected function validateMax($field, $value, $params): bool
+app/Infra/Validator/Validator.php:    protected function validateDateFormat($field, $value, $params)
+app/Infra/Validator/Validator.php:        return parent::validateDateFormat($field, $value ?? '', $params);
+app/Infra/Validator/Validator.php:    protected function validateDateAfter($field, $value, $params)
+app/Infra/Validator/Validator.php:        return parent::validateDateAfter($field, $value ?? '', $params);
+app/Infra/Validator/Validator.php:    protected function validateDateBefore($field, $value, $params)
+app/Infra/Validator/Validator.php:        return parent::validateDateBefore($field, $value ?? '', $params);
+app/Infra/Validator/ValidatorFactory.php:namespace Unicred\CrmCampanhasUs\Infra\Validator;
+app/Infra/Validator/ValidatorFactory.php:class ValidatorFactory
+app/Infra/Validator/ValidatorFactory.php:    public static function create(array $data, string $language = 'pt-br'): Validator
+app/Infra/Validator/ValidatorFactory.php:        return new Validator(data: $data, lang: $language);
+app/Infra/Validator/ValidatorFactory.php:        foreach (self::customValidators() as $ruleName => $value) {
+app/Infra/Validator/ValidatorFactory.php:            Validator::addRule($ruleName, $callback, $message);
+app/Infra/Validator/ValidatorFactory.php:    private static function customValidators(): array

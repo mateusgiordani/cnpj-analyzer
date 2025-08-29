@@ -1,0 +1,18 @@
+app/Controller/CooperadoBaseController.php:            $cooperadoUser->cpfCnpj
+app/Controller/ParticipanteController.php:use Unicred\CrmCampanhasUs\Domain\Participante\V1\ShowCuponsCampanhaByCpfCnpjUseCase;
+app/Controller/ParticipanteController.php:        private ShowCuponsCampanhaByCpfCnpjUseCase $showCuponsCampanhaByCpfCnpjUseCase,
+app/Controller/ParticipanteController.php:    #[GetMapping('v1/campanha/{campanhaUrl}/cupons/{cpfCnpj}')]
+app/Controller/ParticipanteController.php:        path: '/participante/v1/campanha/{campanhaUrl}/cupons/{cpfCnpj}',
+app/Controller/ParticipanteController.php:        description: 'Retorna os cupons de um participante (cpfCnpj) de uma campanha específica (campanhaUrl) de uma cooperativa.',
+app/Controller/ParticipanteController.php:    public function getCuponsByCpfCnpj(
+app/Controller/ParticipanteController.php:        string $cpfCnpj,
+app/Controller/ParticipanteController.php:        $permiteAcessoCpfCnpj = false;
+app/Controller/ParticipanteController.php:            if ($titular->cpfCnpj === $cpfCnpj) {
+app/Controller/ParticipanteController.php:                $permiteAcessoCpfCnpj = true;
+app/Controller/ParticipanteController.php:        if (!$permiteAcessoCpfCnpj) {
+app/Controller/ParticipanteController.php:        return $this->showCuponsCampanhaByCpfCnpjUseCase->execute(
+app/Controller/ParticipanteController.php:            $cpfCnpj,
+app/Controller/ParticipanteController.php:    #[PostMapping('v1/cupons-campanhas/{cpfCnpj}')]
+app/Controller/ParticipanteController.php:    #[OA\Post(path: '/participante/v1/cupons-campanhas/{cpfCnpj}', description: 'cupons de um participante específico', tags: ['participante'])]
+app/Controller/ParticipanteController.php:    public function cuponsParticipante(ServerRequestInterface $request, #[OA\PathParameter] string $cpfCnpj): array
+app/Controller/ParticipanteController.php:        $participanteId = $this->getParticipanteIdUseCase->execute($cdCoop, $cpfCnpj);

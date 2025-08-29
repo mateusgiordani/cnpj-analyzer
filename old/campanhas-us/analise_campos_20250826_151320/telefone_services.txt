@@ -1,0 +1,7 @@
+app/Infra/Service/Unicred/CrmUs/CreateLead.php:        if ($createLeadInputDTO->getPhone()) {
+app/Infra/Service/Unicred/CrmUs/CreateLead.php:            $jsonBody['phone'] = $createLeadInputDTO->getPhone();
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:    private string $phone = '';
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:    public function getPhone(): string
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:        return $this->phone;
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:    public function setPhone(string $phone): void
+app/Infra/Service/Unicred/CrmUs/DTO/CreateLeadInputDTO.php:        $this->phone = $phone;

@@ -1,0 +1,1 @@
+migrations/2024_01_09_160505_create_inidicacao_table.php:            $table->string('telefone');

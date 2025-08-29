@@ -1,0 +1,13 @@
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertEquals($arrData['email'], $indicacaoInput->email);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertSame($arrData['email'], $indicacao->email);
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:            'email' => [
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:                    'email' => 'emailteste',
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:            'email' => 'joao@example.com',
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:        $createLeadInputDTO->setEmail($indicacaoInput->email);
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:                        'email' => 'email@email.com',
+test/Unit/Domain/Indicacao/V1/CadastraLeadCrmUsTest.php:                        'email' => 'email@email.com',
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $this->assertSame($indicacaoInput->email, $indicacaoSalva->email);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:        $this->assertSame($indicacaoInput->email, $indicacaoSalva->email);
+test/Unit/Domain/Indicacao/V1/SaveIndicacaoUseCaseTest.php:            'email' => 'email@email.com',
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:        $this->assertSame($indicacaoInput->email, $indicacaoSalva->email);
+test/Unit/Domain/lead/V1/SaveLeadUseCaseTest.php:            'email' => 'email@email.com',

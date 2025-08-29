@@ -1,0 +1,4 @@
+test/Unit/Domain/MotorCupom/V1/InputOutputData/IndicacaoInputTest.php:        $this->assertSame($arrData['cpfCnpj'], $indicacao->cpf_cnpj);
+test/Unit/Domain/Campanha/V1/GetSorteioByCampanhaIdUseCaseTest.php:            'cpf_cnpj' => 67790553011,
+test/Unit/Domain/Campanha/V1/GetSorteioByCampanhaIdUseCaseTest.php:        $cooperado1->cpf_cnpj = 90201520000155;
+test/Unit/Domain/Campanha/V1/GetSorteioByCampanhaIdUseCaseTest.php:        $cooperado2->cpf_cnpj = 67790553011;

@@ -1,0 +1,17 @@
+# Configuração de Variáveis de Ambiente - Analisador CNPJ Alfanumérico
+# Copie este arquivo para .env e configure suas variáveis
+
+# Pasta principal onde estão localizados os projetos para análise
+# Esta pasta deve conter subpastas, cada uma representando um projeto
+PROJECTS_FOLDER=/caminho/para/sua/pasta/de/projetos
+
+# Exemplos de configuração:
+# PROJECTS_FOLDER=/home/usuario/projetos
+# PROJECTS_FOLDER=/var/www/projects
+# PROJECTS_FOLDER=./projetos
+
+# Configurações opcionais
+# LOG_LEVEL=INFO
+# OUTPUT_DIR=reports
+# MAX_WORKERS=4
+

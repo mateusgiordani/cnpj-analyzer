@@ -1,0 +1,3 @@
+test/Unit/Domain/Indicacao/V1/GetDadosIndicacaoUseCaseTest.php:        $participanteRepository->createParticipante(590, '12345678901234', 'J', codigoIndicacao: 'indicacaopj');
+test/Unit/Domain/Indicacao/V1/GetDadosIndicacaoUseCaseTest.php:        $pessoaJuridicaService->expects($this->once())->method('execute')->willReturn(new PessoaDTO('12345678901234', 'Cooperado PJ'));
+test/Unit/Domain/Indicacao/V1/GetDadosIndicacaoUseCaseTest.php:        $participanteRepository->createParticipante(590, '12345678901234', 'J', codigoIndicacao: 'indicacaopj');
