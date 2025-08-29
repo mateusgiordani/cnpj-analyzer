@@ -680,5 +680,79 @@ def general_analysis(reports_dir: str = typer.Option("reports/", help="Diretóri
     print(f"   Campos críticos: {stats.get('total_critical_fields', 0)}")
     print(f"   Campos de alto impacto: {stats.get('total_high_impact_fields', 0)}")
 
+
+@app.command()
+def export_powerpoint(reports_dir: str = typer.Option("reports/", help="Diretório com relatórios de projetos")):
+    """Exporta relatório geral para PowerPoint"""
+    from src.exporters.presentation_exporter import PresentationExporter
+    
+    print("📊 Gerando apresentação PowerPoint...")
+    
+    try:
+        exporter = PresentationExporter(reports_dir)
+        output_file = exporter.export_to_powerpoint()
+        
+        print(f"✅ Apresentação PowerPoint salva em: {output_file}")
+        
+    except ImportError as e:
+        print(f"❌ Erro: {e}")
+        print("💡 Para instalar as dependências necessárias:")
+        print("   pip install python-pptx")
+    except Exception as e:
+        print(f"❌ Erro ao gerar apresentação: {e}")
+
+
+@app.command()
+def export_pdf(reports_dir: str = typer.Option("reports/", help="Diretório com relatórios de projetos")):
+    """Exporta relatório geral para PDF"""
+    from src.exporters.presentation_exporter import PresentationExporter
+    
+    print("📄 Gerando relatório PDF...")
+    
+    try:
+        exporter = PresentationExporter(reports_dir)
+        output_file = exporter.export_to_pdf()
+        
+        print(f"✅ Relatório PDF salvo em: {output_file}")
+        
+    except ImportError as e:
+        print(f"❌ Erro: {e}")
+        print("💡 Para instalar as dependências necessárias:")
+        print("   pip install weasyprint")
+    except Exception as e:
+        print(f"❌ Erro ao gerar PDF: {e}")
+
+
+@app.command()
+def export_all(reports_dir: str = typer.Option("reports/", help="Diretório com relatórios de projetos")):
+    """Exporta relatório geral para PowerPoint e PDF"""
+    from src.exporters.presentation_exporter import PresentationExporter
+    
+    print("🚀 Gerando todas as exportações...")
+    
+    try:
+        exporter = PresentationExporter(reports_dir)
+        
+        # Gerar PowerPoint
+        print("📊 Gerando apresentação PowerPoint...")
+        pptx_file = exporter.export_to_powerpoint()
+        print(f"✅ PowerPoint salvo em: {pptx_file}")
+        
+        # Gerar PDF
+        print("📄 Gerando relatório PDF...")
+        pdf_file = exporter.export_to_pdf()
+        print(f"✅ PDF salvo em: {pdf_file}")
+        
+        print(f"\n🎉 Todas as exportações concluídas!")
+        print(f"   PowerPoint: {pptx_file}")
+        print(f"   PDF: {pdf_file}")
+        
+    except ImportError as e:
+        print(f"❌ Erro: {e}")
+        print("💡 Para instalar todas as dependências:")
+        print("   pip install python-pptx weasyprint")
+    except Exception as e:
+        print(f"❌ Erro ao gerar exportações: {e}")
+
 if __name__ == "__main__":
     app()

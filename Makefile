@@ -70,6 +70,18 @@ general-analysis: ## Gera relatório geral de todos os projetos analisados
 	@echo "$(BLUE)Gerando relatório geral...$(NC)"
 	$(PYTHON) $(ANALYZER_SCRIPT) general-analysis --reports-dir reports/
 
+export-powerpoint: ## Exporta relatório geral para PowerPoint
+	@echo "$(BLUE)Gerando apresentação PowerPoint...$(NC)"
+	$(PYTHON) $(ANALYZER_SCRIPT) export-powerpoint --reports-dir reports/
+
+export-pdf: ## Exporta relatório geral para PDF
+	@echo "$(BLUE)Gerando relatório PDF...$(NC)"
+	$(PYTHON) $(ANALYZER_SCRIPT) export-pdf --reports-dir reports/
+
+export-all: ## Exporta relatório geral para PowerPoint e PDF
+	@echo "$(BLUE)Gerando todas as exportações...$(NC)"
+	$(PYTHON) $(ANALYZER_SCRIPT) export-all --reports-dir reports/
+
 analyze-folder: ## Analisa todos os projetos em uma pasta (use FOLDER=./caminho/da/pasta)
 	@if [ -z "$(FOLDER)" ]; then \
 		echo "$(RED)Erro: Especifique a pasta com FOLDER=./caminho/da/pasta$(NC)"; \
